@@ -9,7 +9,7 @@ Klassen använder `InputHandler` för att läsa av tangentbordsinput och uppdate
 Konstruktorn tar emot `game`-instansen samt position och storlek för spelaren. Den initierar även hastighet och riktning.
 
 ```javascript
-    constructor(game, x, y, width, height, color) {
+    constructor(game, x, y, width, height, color = "green") {
         super(game, x, y, width, height)
         this.color = color
         
@@ -24,7 +24,7 @@ Konstruktorn tar emot `game`-instansen samt position och storlek för spelaren. 
     }
 ```
 
-Inget jättekonstigt, vi sätter egenskaper för färg, hastighet och riktning.
+Inget jättekonstigt, vi sätter egenskaper för färg, hastighet och riktning. Men det är ett viktigt mönster för hur vi jobbar med klasserna för att skapa spelobjekt. Vi kan även sätta en standardfärg för spelaren här, i detta fall grön i konstruktorn.
 
 ## Uppdateringsmetod
 
@@ -98,6 +98,12 @@ Detta ger spelaren ett enkelt ansikte med ögon och mun, vilket gör den mer lev
 
 Hur kan vi göra spelarens mun mer uttrycksfull? Experimentera med ritmetoderna för att göra munnen glad eller ledsen. Testa att styra det med inputs, eller varför inte göra spelaren ledsen när den inte rör sig?
 
+## Uppgifter
+
+### Glad och ledsen mun
+
+Hur kan vi göra spelarens mun mer uttrycksfull? Experimentera med ritmetoderna för att göra munnen glad eller ledsen. Testa att styra det med inputs, eller varför inte göra spelaren ledsen när den inte rör sig?
+
 ### Animationer
 
 Kan du göra spelaren mer levande genom att lägga till animationer? Till exempel att ögonen blinkar, munnen rör sig, eller att spelaren "hoppar" när den rör sig snabbt?
@@ -105,6 +111,8 @@ Kan du göra spelaren mer levande genom att lägga till animationer? Till exempe
 ### Accelererande rörelse
 
 Istället för att spelaren direkt får full hastighet när en tangent trycks ned, försök implementera mjuk acceleration och inbromsning. Detta ger en mer realistisk känsla.
+
+Utgå då från att du har en `acceleration`-egenskap och en `friction`-egenskap i konstruktorn, och uppdatera hastigheten i `update`-metoden baserat på dessa. Det vill säga att innan du nått maxhastigheten så ökar du hastigheten med `acceleration` varje frame när en tangent är nedtryckt. När ingen tangent är nedtryckt så minskar du hastigheten med `friction` tills den når 0.
 
 ## Sammanfattning
 
@@ -117,10 +125,10 @@ Vi har även gett spelaren ett enkelt ansikte med ögon som tittar i rörelserik
 1. Varför hanterar vi X- och Y-rörelsen i separata if-satser istället för att använda `else if`?
 2. Hur används `directionX` och `directionY` för att få ögonen att "titta" åt rätt håll?
 3. Varför multiplicerar vi position med `deltaTime` i update-metoden?
-4. Hur skulle du stoppa spelaren från att gå utanför canvasens vänstra kant?
+4. Hur fungerar det när vi stoppar spelaren från att gå utanför canvasens gränser?
 5. Vilka Canvas-metoder används för att rita spelarens mun som ett streck?
 
 ## Nästa steg
 
-För att lära dig om kollisionsdetektering och hur spelaren kan interagera med andra objekt, se [collision.md](collision.md).
+För att lära dig om kollisionsdetektering och hur spelaren kan interagera med andra objekt, byt till `collision` branchen och se [collision.md](collision.md).
 

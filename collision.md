@@ -21,9 +21,31 @@ Två rektanglar kolliderar om de **överlappar varandra**. För att kolla detta 
 - Toppen av rektangel A är ovanför botten av rektangel B
 - Botten av rektangel A är under toppen av rektangel B
 
+**Illustration - Kollision upptäckt:**
+```
+     A.x            A.x + A.width
+      ├──────────────┤
+      │   Player A   │
+      │              │
+      └──────┬───────┘
+             │ Överlapp!
+      ┌──────┴───────┐
+      │   Object B   │
+      │              │
+      └──────────────┘
+     B.x            B.x + B.width
+```
+
+**Illustration - Ingen kollision:**
+```
+      ┌──────────┐              ┌──────────┐
+      │ Player A │   Mellanrum  │ Object B │
+      └──────────┘              └──────────┘
+```
+
 ### Implementering i GameObject
 
-I `GameObject`-klassen finns redan metoden `intersects()`:
+I `GameObject`-klassen finns redan metoden `intersects()` som kontrollerar AABB-kollision. Den fungerar så att den tar ett annat `GameObject`, `other`, som parameter och returnerar `true` om de kolliderar, annars `false`.
 
 ```javascript
 intersects(other) {
@@ -34,19 +56,9 @@ intersects(other) {
 }
 ```
 
-### Vad fungerar den med?
-
-✅ **Fungerar med:**
-- Rektanglar som är parallella med axlarna (inte roterade)
-- Kvadrater
-- Alla objekt med `x`, `y`, `width`, och `height`
-
-❌ **Fungerar INTE med:**
-- Roterade rektanglar
-- Cirklar
-- Trianglar eller andra polygoner
-
 ## Var ska kollision kontrolleras?
+
+Om ni minns så har vi pratat en hel del om vad som ansvarar för vad i den kod vi skriver. I det här fallet så måste vi fråga oss var kollisionskontrollen ska ske. Är det spelaren som ansvarar för att kolla om den kolliderar med andra objekt, eller är det spelet som helhet som ska göra det?
 
 Det är `Game`-klassens ansvar att kontrollera kollisioner. Detta följer **Single Responsibility Principle**:
 
@@ -56,7 +68,7 @@ Det är `Game`-klassens ansvar att kontrollera kollisioner. Detta följer **Sing
 - ✅ Player behöver inte veta om andra objekt
 - ✅ Enklare att testa och underhålla
 
-**Viktigt:** Spelaren ska lagras separat från `gameObjects`-arrayen:
+**Viktigt:** Vi behöver sparar spelaren separat i `Game`, inte som en del av `gameObjects`-arrayen. Detta gör det enklare att hantera spelaren direkt och undviker onödig iteration över alla objekt när vi bara vill uppdatera eller rita spelaren.
 
 ```javascript
 // I Game.js constructor
@@ -132,6 +144,37 @@ this.gameObjects.forEach(obj => {
 - När spelaren rör sig **åt vänster** (`directionX < 0`), placerar vi spelaren precis till **höger** om objektet
 - Samma logik för vertikal rörelse
 
+**Illustration - Rörelse åt höger:**
+```
+Före kollision:
+   ┌─────┐      ┌────────┐
+   │  P  │ →    │ Object │
+   └─────┘      └────────┘
+
+Vid kollision (upptäckt):
+         ┌─────┬────────┐
+         │  P  │ Object │
+         └─────┴────────┘
+
+Efter korrigering:
+   ┌─────┐┌────────┐
+   │  P  ││ Object │  ← Spelaren flyttad till obj.x - player.width
+   └─────┘└────────┘
+```
+
+**Illustration - Rörelse åt vänster:**
+```
+Före kollision:
+   ┌────────┐      ┌─────┐
+   │ Object │    ← │  P  │
+   └────────┘      └─────┘
+
+Efter korrigering:
+   ┌────────┐┌─────┐
+   │ Object ││  P  │  ← Spelaren flyttad till obj.x + obj.width
+   └────────┘└─────┘
+```
+
 ## Rita spelaren korrekt
 
 För att spelaren ska synas ovanpå andra objekt, rita den sist:
@@ -148,13 +191,13 @@ draw(ctx) {
 
 ## Uppgifter
 
-### 1. Grundläggande kollision
+### Grundläggande kollision
 
 Implementera kollisionsdetektering mellan spelaren och flera rektanglar. Testa att spelaren inte kan gå igenom dem.
 
-### 2. Visuell feedback
+### Visuell feedback
 
-När spelaren kolliderar med ett objekt, byt färg på objektet eller spelaren för att visa att kollision har inträffat.
+När spelaren kolliderar med ett objekt, byt färg på objektet eller spelaren för att visa att kollision har inträffat. Eller varför inte göra spelarens mun ledsen (då behöver du även byta tillbaka den)?
 
 ```javascript
 if (this.player.intersects(obj)) {
@@ -163,114 +206,27 @@ if (this.player.intersects(obj)) {
 }
 ```
 
-### 3. En labyrint
+### En labyrint
 
-Skapa en enkel labyrint med rektanglar som spelaren måste navigera genom:
+Bygg en labyrint med rektanglar som spelaren måste navigera genom. Använd flera `Rectangle`-objekt för att skapa väggar och hinder.
 
-```javascript
-this.gameObjects = [
-    // Väggar
-    new Rectangle(this, 0, 0, 800, 20, 'gray'),      // Topp
-    new Rectangle(this, 0, 460, 800, 20, 'gray'),    // Botten
-    new Rectangle(this, 0, 0, 20, 480, 'gray'),      // Vänster
-    new Rectangle(this, 780, 0, 20, 480, 'gray'),    // Höger
-    
-    // Hinder
-    new Rectangle(this, 200, 100, 20, 200, 'gray'),
-    new Rectangle(this, 400, 200, 20, 200, 'gray')
-]
-```
+### Mål-objekt
 
-### 4. Mål-objekt
+Skapa en `Goal`-klass som spelaren kan nå, du gör detta genom att ärva från `GameObject`. Du behöver sedan uppdatera `Game`-klassen för att inkludera ett målobjekt och kolla om spelaren når det.
 
-Skapa en `Goal`-klass som spelaren kan nå:
+### Samla objekt
 
-```javascript
-export default class Goal extends GameObject {
-    constructor(game, x, y, size) {
-        super(game, x, y, size, size)
-        this.color = 'gold'
-    }
-    
-    draw(ctx) {
-        ctx.fillStyle = this.color
-        ctx.fillRect(this.x, this.y, this.width, this.height)
-    }
-}
-```
+Lägg till samlingsobjekt (t.ex. mynt) som spelaren kan plocka upp. När spelaren kolliderar med ett samlingsobjekt skaffa poäng och ta bort objektet från spelet.
 
-Lägg till i `Game`:
+## Sammanfattning
 
-```javascript
-this.goal = new Goal(this, 700, 400, 30)
+I den här delen så har vi använt våra klasser för att faktiskt implementera lite spelmekanik. Vår spelare kan nu interagera med andra objekt genom kollisioner, och vi har lärt oss hur vi kan hantera dessa kollisioner.
 
-// I update()
-if (this.player.intersects(this.goal)) {
-    console.log('Du vann!')
-    // Visa vinstmeddelande, starta om nivå, etc.
-}
-```
-
-### 5. Samlingsobjekt
-
-Skapa objekt som spelaren kan plocka upp:
-
-```javascript
-// I update()
-this.gameObjects.forEach((obj, index) => {
-    if (obj.collectible && this.player.intersects(obj)) {
-        this.gameObjects.splice(index, 1) // Ta bort objektet
-        this.score += 10 // Öka poäng
-    }
-})
-```
-
-## Avancerade koncept
-
-### Problem med AABB-kollision
-
-Den nuvarande implementationen har några begränsningar:
-
-1. **Fästning i hörn** - Om spelaren rör sig diagonalt kan den fastna
-2. **Tunneling** - Vid hög hastighet kan spelaren gå igenom tunna objekt
-3. **Rotation stöds inte** - Fungerar bara för icke-roterade rektanglar
-
-### Förbättringar
-
-**Separera X och Y kollision:**
-Istället för att kontrollera kollision efter att vi har flyttat spelaren, kan vi:
-1. Flytta X-position
-2. Kolla kollision, fixa X om nödvändigt
-3. Flytta Y-position
-4. Kolla kollision, fixa Y om nödvändigt
-
-Detta förhindrar att spelaren fastnar i hörn.
-
-## Testfrågor
+### Testfrågor
 
 1. Vad betyder AABB och vilka former fungerar den med?
 2. Varför lagras spelaren separat från `gameObjects`-arrayen?
 3. Varför är det `Game`-klassen som ansvarar för kollisionsdetektering?
-4. När spelaren rör sig åt höger och kolliderar, var placerar vi spelaren?
-5. Varför använder vi `directionX` och `directionY` istället för `velocityX` och `velocityY`?
-6. Hur tar vi bort ett objekt från `gameObjects`-arrayen när spelaren plockar upp det?
-7. Varför ritar vi spelaren sist i `draw()`-metoden?
-8. Vad händer om spelaren rör sig väldigt snabbt mot ett tunt objekt? (tunneling)
-
-## Sammanfattning
-
-I den här guiden har vi lärt oss:
-- Hur AABB-kollisionsdetektering fungerar
-- Var kollisionskontroll ska ske (i `Game`)
-- Hur vi stoppar spelaren vid kollision
-- Hur vi skapar samlingsobjekt och mål
-- Grundläggande begränsningar med AABB
-
-Med dessa kunskaper kan du nu skapa interaktiva spel med hinder, samlingsobjekt, och mål!
-
-## Nästa steg
-
-- Implementera olika typer av objekt (fiender, power-ups, etc.)
-- Lägg till ljudeffekter vid kollision
-- Skapa flera nivåer med olika layouter
-- Experimentera med cirkel-kollision för rundare objekt
+4. Varför ritar vi spelaren sist i `draw()`-metoden?
+5. Vad händer om spelaren rör sig väldigt snabbt mot ett tunt objekt? (detta kallas tunneling)
+6. Hur kan vi ändra färgen på ett objekt vid kollision för visuell feedback?
