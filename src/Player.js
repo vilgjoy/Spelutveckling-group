@@ -17,6 +17,13 @@ export default class Player extends GameObject {
         // Fysik egenskaper
         this.jumpPower = -0.6 // negativ hastighet för att hoppa uppåt
         this.isGrounded = false // om spelaren står på marken
+        
+        // Health system
+        this.maxHealth = 3
+        this.health = this.maxHealth
+        this.invulnerable = false // Immun mot skada efter att ha blivit träffad
+        this.invulnerableTimer = 0
+        this.invulnerableDuration = 1000 // 1 sekund i millisekunder
     }
 
     update(deltaTime) {
@@ -59,9 +66,64 @@ export default class Player extends GameObject {
         // Uppdatera position baserat på hastighet
         this.x += this.velocityX * deltaTime
         this.y += this.velocityY * deltaTime
+        
+        // Uppdatera invulnerability timer
+        if (this.invulnerable) {
+            this.invulnerableTimer -= deltaTime
+            if (this.invulnerableTimer <= 0) {
+                this.invulnerable = false
+            }
+        }
+    }
+    
+    takeDamage(amount) {
+        if (this.invulnerable) return
+        
+        this.health -= amount
+        if (this.health < 0) this.health = 0
+        
+        // Sätt invulnerability efter att ha tagit skada
+        this.invulnerable = true
+        this.invulnerableTimer = this.invulnerableDuration
+        
+        // Spelaren dör om health når 0
+        if (this.health <= 0) {
+            this.markedForDeletion = true
+        }
+    }
+    
+    handlePlatformCollision(platform) {
+        const collision = this.getCollisionData(platform)
+        
+        if (collision) {
+            if (collision.direction === 'top' && this.velocityY > 0) {
+                // Kollision från ovan - spelaren landar på plattformen
+                this.y = platform.y - this.height
+                this.velocityY = 0
+                this.isGrounded = true
+            } else if (collision.direction === 'bottom' && this.velocityY < 0) {
+                // Kollision från nedan - spelaren träffar huvudet
+                this.y = platform.y + platform.height
+                this.velocityY = 0
+            } else if (collision.direction === 'left' && this.velocityX > 0) {
+                // Kollision från vänster
+                this.x = platform.x - this.width
+            } else if (collision.direction === 'right' && this.velocityX < 0) {
+                // Kollision från höger
+                this.x = platform.x + platform.width
+            }
+        }
     }
 
     draw(ctx) {
+        // Blinka när spelaren är invulnerable
+        if (this.invulnerable) {
+            const blinkSpeed = 100 // millisekunder per blink
+            if (Math.floor(this.invulnerableTimer / blinkSpeed) % 2 === 0) {
+                return // Skippa rendering denna frame för blink-effekt
+            }
+        }
+        
         // Rita spelaren som en rektangel
         ctx.fillStyle = this.color
         ctx.fillRect(this.x, this.y, this.width, this.height)

@@ -2,6 +2,7 @@ import Player from './Player.js'
 import InputHandler from './InputHandler.js'
 import Platform from './Platform.js'
 import Coin from './Coin.js'
+import Enemy from './Enemy.js'
 import UserInterface from './UserInterface.js'
 
 export default class Game {
@@ -47,6 +48,13 @@ export default class Game {
             new Coin(this, 420, this.height - 360),
         ]
 
+        // Skapa fiender i nivån
+        this.enemies = [
+            new Enemy(this, 200, this.height - 220, 40, 40, 80),  // patrol 80px
+            new Enemy(this, 450, this.height - 240, 40, 40),      // ingen patrol, går tills kollision
+            new Enemy(this, 360, this.height - 440, 40, 40, 50),  // patrol 50px
+        ]
+
         // Skapa andra objekt i spelet (valfritt)
         this.gameObjects = []
     }
@@ -61,6 +69,9 @@ export default class Game {
         // Uppdatera mynt
         this.coins.forEach(coin => coin.update(deltaTime))
         
+        // Uppdatera fiender
+        this.enemies.forEach(enemy => enemy.update(deltaTime))
+        
         // Uppdatera spelaren
         this.player.update(deltaTime)
 
@@ -69,26 +80,27 @@ export default class Game {
 
         // Kontrollera kollisioner med plattformar
         this.platforms.forEach(platform => {
-            const collision = this.player.getCollisionData(platform)
+            this.player.handlePlatformCollision(platform)
+        })
+
+        // Kontrollera kollisioner för fiender med plattformar
+        this.enemies.forEach(enemy => {
+            enemy.isGrounded = false // till skillnad från spelaren så behöver vi sätta denna i loopen eftersom det är flera fiender
             
-            if (collision) {
-                if (collision.direction === 'top' && this.player.velocityY > 0) {
-                    // Kollision från ovan - spelaren landar på plattformen
-                    this.player.y = platform.y - this.player.height
-                    this.player.velocityY = 0
-                    this.player.isGrounded = true
-                } else if (collision.direction === 'bottom' && this.player.velocityY < 0) {
-                    // Kollision från nedan - spelaren träffar huvudet
-                    this.player.y = platform.y + platform.height
-                    this.player.velocityY = 0
-                } else if (collision.direction === 'left' && this.player.velocityX > 0) {
-                    // Kollision från vänster
-                    this.player.x = platform.x - this.player.width
-                } else if (collision.direction === 'right' && this.player.velocityX < 0) {
-                    // Kollision från höger
-                    this.player.x = platform.x + platform.width
-                }
-            }
+            this.platforms.forEach(platform => {
+                enemy.handlePlatformCollision(platform)
+            })
+            
+            // Vänd vid skärmkanter
+            enemy.handleScreenBounds(this.width)
+        })
+        
+        // Kontrollera kollisioner mellan fiender
+        this.enemies.forEach((enemy, index) => {
+            this.enemies.slice(index + 1).forEach(otherEnemy => {
+                enemy.handleEnemyCollision(otherEnemy)
+                otherEnemy.handleEnemyCollision(enemy)
+            })
         })
 
         // Kontrollera kollision med mynt
@@ -101,8 +113,17 @@ export default class Game {
             }
         })
         
+        // Kontrollera kollision med fiender
+        this.enemies.forEach(enemy => {
+            if (this.player.intersects(enemy) && !enemy.markedForDeletion) {
+                // Spelaren tar skada
+                this.player.takeDamage(enemy.damage)
+            }
+        })
+        
         // Ta bort alla objekt markerade för borttagning
         this.coins = this.coins.filter(coin => !coin.markedForDeletion)
+        this.enemies = this.enemies.filter(enemy => !enemy.markedForDeletion)
 
         // Förhindra att spelaren går utöver skärmen horisontellt
         if (this.player.x < 0) {
@@ -119,6 +140,9 @@ export default class Game {
         
         // Rita mynt
         this.coins.forEach(coin => coin.draw(ctx))
+        
+        // Rita fiender
+        this.enemies.forEach(enemy => enemy.draw(ctx))
         
         // Rita andra spelobjekt
         this.gameObjects.forEach(obj => obj.draw(ctx))

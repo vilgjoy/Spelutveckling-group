@@ -26,6 +26,27 @@ export default class UserInterface {
         const coinsText = `Coins: ${this.game.coinsCollected}`
         ctx.fillText(coinsText, 20, 70)
         
+        // Rita health
+        const healthText = `Health: ${this.game.player.health}/${this.game.player.maxHealth}`
+        ctx.fillText(healthText, 20, 100)
+        
+        // Rita health bars som hjärtan
+        for (let i = 0; i < this.game.player.maxHealth; i++) {
+            const heartX = 20 + i * 30
+            const heartY = 110
+            
+            if (i < this.game.player.health) {
+                // Fyllt hjärta
+                ctx.fillStyle = '#FF0000'
+            } else {
+                // Tomt hjärta
+                ctx.fillStyle = '#333333'
+            }
+            
+            // Rita enkelt hjärta (rektangel för enkelhetens skull)
+            ctx.fillRect(heartX, heartY, 20, 20)
+        }
+        
         ctx.restore()
     }
 }
