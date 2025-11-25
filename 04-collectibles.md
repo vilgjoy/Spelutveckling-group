@@ -1,4 +1,4 @@
-# Collectibles - Mynt och Score system
+# Steg 4 - Collectibles - Mynt och Score system
 
 I detta steg lägger vi till samlarbara objekt (mynt) och ett score-system med UI. Detta ger spelet en gameplay-loop där spelaren har ett mål: samla så många mynt som möjligt.
 

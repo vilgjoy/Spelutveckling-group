@@ -1,4 +1,4 @@
-# Enemies - Fiender och Health System
+# Steg 5 - Enemies - Fiender och Health System
 
 I detta steg lägger vi till fiender med enkel AI (diskutabelt vad som räknas som AI, att patrullera fram och tillbaka är intelligens?) och ett health-system för spelaren. Detta introducerar en ny gameloop i spelet, risk och utmaning.
 

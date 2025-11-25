@@ -1,4 +1,4 @@
-# Kollisionsdetektering
+# Steg 2 - Kollisionsdetektering
 
 I den här delen lär vi oss om kollisionsdetektering - hur vi kan upptäcka när två objekt i spelet kolliderar med varandra. Detta är fundamentalt för att skapa interaktiva spel där spelaren kan plocka upp föremål, stöta på hinder, eller ta skada från fiender.
 

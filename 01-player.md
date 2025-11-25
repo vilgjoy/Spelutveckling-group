@@ -1,4 +1,4 @@
-# Player
+# Steg 1 - Player
 
 I den här delen så skapar vi en `Player`-klass som ärver från `GameObject`. Denna klass representerar spelaren i spelet och hanterar dess rörelse och rendering.
 

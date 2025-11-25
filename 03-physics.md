@@ -1,4 +1,4 @@
-# Fysik i spelmotorn
+# Steg 3 - Fysik i spelmotorn
 
 I den här delen ska vi titta på hur vi kan introducera enekel fysik i spelet. Vi börjar med att lägga till gravitation, hopp och kollisionshantering mellan spelaren och plattformar. Det ger oss grunden för att skapa ett plattformsspel.
 

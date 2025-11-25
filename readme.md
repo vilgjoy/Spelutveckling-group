@@ -135,4 +135,14 @@ Det här repot ger en grundläggande struktur för att skapa 2D-spel med JavaScr
 
 ## Nästa steg
 
-Fortsätt läsa  i [player](01-player.md) för att lära dig mer om input-hantering och att skapa en spelarkaraktär!
+Denna tutorial är uppdelad i steg som följer en logisk progression. Varje steg bygger på det föregående:
+
+1. **[Player](01-player.md)** - Skapa en spelarklass med input och rörelse
+2. **[Collision](02-collision.md)** - AABB-kollisionsdetektering
+3. **[Physics](03-physics.md)** - Gravitation, hopp och plattformar
+4. **[Collectibles](04-collectibles.md)** - Mynt, score och UI
+5. **[Enemies](05-enemies.md)** - Fiender, health och damage
+
+Varje steg har sin egen git-branch (t.ex. `01-player`, `02-collision`, etc.) där koden för det steget finns implementerad.
+
+**Börja här:** [Steg 1 - Player](01-player.md)
