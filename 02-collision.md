@@ -6,7 +6,7 @@ I den här delen lär vi oss om kollisionsdetektering - hur vi kan upptäcka nä
 
 Innan du börjar med kollisioner bör du ha:
 - En fungerande `GameObject`-klass
-- En `Player`-klass som kan röra sig (se [player.md](player.md))
+- En `Player`-klass som kan röra sig (se [player.md](01-player.md))
 - Minst en annan typ av objekt (t.ex. `Rectangle`)
 
 ## Vad är AABB-kollision?
@@ -240,4 +240,4 @@ Byt branch till `physics` och fortsätt till nästa del i guiden!
 git checkout physics
 ```
 
-Öppna sedan filen [physics.md](physics.md) för att fortsätta!
+Öppna sedan filen [physics.md](03-physics.md) för att fortsätta!

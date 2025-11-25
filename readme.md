@@ -135,4 +135,4 @@ Det här repot ger en grundläggande struktur för att skapa 2D-spel med JavaScr
 
 ## Nästa steg
 
-Fortsätt läsa  i [player](player.md) för att lära dig mer om input-hantering och att skapa en spelarkaraktär!
+Fortsätt läsa  i [player](01-player.md) för att lära dig mer om input-hantering och att skapa en spelarkaraktär!
