@@ -219,4 +219,4 @@ För att fortsätta med nästa steg så behöver du byta branch till `01-player`
 git checkout 01-player
 ```
 
-Fortsätt sedan till `01-player.md` för att lära dig hur du skapar en spelarkaraktär som kan röra sig runt på canvasen!
+Läs sedan **[Steg 1 - Player](01-player.md)** för att fortsätta!
