@@ -1,8 +1,22 @@
-# Player
+# Steg 1 - Player
 
-I den här delen så skapar vi en `Player`-klass som ärver från `GameObject`. Denna klass representerar spelaren i spelet och hanterar dess rörelse och rendering.
+Vi skapar en spelarklass med tangentbordskontroll och rörelse - grunden för alla interaktiva spel.
 
-Klassen använder `InputHandler` för att läsa av tangentbordsinput och uppdatera spelarens position baserat på detta.
+## Vad lär vi oss?
+
+I detta steg fokuserar vi på:
+- **Arv (Inheritance)** - Player bygger vidare på GameObject
+- **Input-hantering** - Koppla tangentbordet till spelarrörelse
+- **DeltaTime** - Framrate-oberoende rörelse
+- **Inkapsling** - Player äger sin egen data och beteende
+
+## Översikt
+
+För att skapa en kontrollerbar spelare behöver vi:
+1. **Player-klass** - Ärver från GameObject, får grundläggande egenskaper
+2. **Velocity-system** - Hastighet och riktning för rörelse
+3. **Input-hantering** - Läsa tangentbordet via InputHandler
+4. **Rendering** - Rita spelaren med ögon och mun som "tittar"
 
 ## Konstruktor
 
@@ -24,11 +38,11 @@ Konstruktorn tar emot `game`-instansen samt position och storlek för spelaren. 
     }
 ```
 
-Inget jättekonstigt, vi sätter egenskaper för färg, hastighet och riktning. Men det är ett viktigt mönster för hur vi jobbar med klasserna för att skapa spelobjekt. Vi kan även sätta en standardfärg för spelaren här, i detta fall grön i konstruktorn.
+Vi sätter egenskaper för färg, hastighet och riktning - ett standardmönster för spelobjekt. Notera standardparametern `color = "green"` som gör att vi kan skapa en grön spelare utan att ange färg explicit.
 
 ## Uppdateringsmetod
 
-I uppdateringsmetoden så händer det en hel del. Vi kollar vilka tangenter som är nedtryckta och uppdaterar spelarens hastighet och riktning baserat på detta. Utifrån det här sätter vi även en variabel för spelarens riktning. Det kan användas för bland annat att rita ut ögon som "tittar" i den riktningen spelaren rör sig, men det är även användbart för andra saker som animationer, attacker med mera.
+I uppdateringsmetoden händer mycket. Vi kollar vilka tangenter som är nedtryckta och uppdaterar spelarens hastighet och riktning baserat på detta. Vi sätter även variabler för spelarens riktning (`directionX` och `directionY`) som kan användas för att rita ögon som "tittar" i rörelseriktningen, eller för animationer och attacker.
 
 ```javascript
     update(deltaTime) {
@@ -52,11 +66,11 @@ I uppdateringsmetoden så händer det en hel del. Vi kollar vilka tangenter som 
     }
 ```
 
-Som du ser är hanteringen av input och rörelsen ganska likadan. Vi kollar om en viss tangent är nedtryckt, och om den är det så sätter vi hastigheten i den riktningen. Om ingen tangent är nedtryckt så sätter vi hastigheten till 0.
+Hanteringen av input och rörelse följer samma mönster för både X- och Y-axeln. Vi kollar om en tangent är nedtryckt och sätter hastigheten i den riktningen, annars nollställs hastigheten.
 
-Fundera här varför vi hanterar rörelsen i två separata if-satser istället för att använda `else if` för både X- och Y-rörelsen.
+**Viktigt:** Vi hanterar rörelsen i två separata if-satser (inte `else if`) - fundera på varför. Ledtråd: Vad händer om spelaren trycker både upp OCH höger samtidigt?
 
-Slutligen uppdaterar vi spelarens position baserat på hastigheten och `deltaTime`. Det är för att göra rörelsen framerate-oberoende.
+Slutligen uppdaterar vi spelarens position baserat på hastigheten och `deltaTime` för att göra rörelsen framrate-oberoende.
 
 ### Stoppa spelaren från att gå utanför canvas
 
@@ -72,9 +86,9 @@ if (this.y + this.height > this.game.height) this.y = this.game.height - this.he
 
 ## Renderingsmetod
 
-I draw så ritar vi ut spelaren som en rektangel. Detta sker likadant som i `Rectangle`-klassen vi skapade tidigare. Men här så lägger vi även till ögon som "tittar" i den riktning spelaren rör sig. Detta för att ge spelaren karaktär.
+I draw ritar vi ut spelaren som en rektangel, precis som i `Rectangle`-klassen. Men här lägger vi även till ögon som "tittar" i den riktning spelaren rör sig för att ge karaktär.
 
-För att flytta på ögonen så använder vi `directionX` och `directionY` som vi satte i `update`-metoden. Vi kan sedan påverka var vi ritar ut ögonen baserat på dessa värden.
+Vi använder `directionX` och `directionY` (från `update`-metoden) för att påverka var ögonen ritas.
 
 ### Rita mun
 
@@ -126,9 +140,17 @@ Vi har även gett spelaren ett enkelt ansikte med ögon som tittar i rörelserik
 2. Hur används `directionX` och `directionY` för att få ögonen att "titta" åt rätt håll?
 3. Varför multiplicerar vi position med `deltaTime` i update-metoden?
 4. Hur fungerar det när vi stoppar spelaren från att gå utanför canvasens gränser?
-5. Vilka Canvas-metoder används för att rita spelarens mun som ett streck?
+5. Varför separerar vi position från velocity? Hur underlättar detta för kollisionsdetektering i nästa steg?
+6. Vad händer om `deltaTime` varierar mycket mellan frames? Varför är detta ett problem för framtida physics?
+7. Varför tänker vi på spelaren som en rektangel? Hur skulle du beskriva spelarens 'hitbox'?
+8. Vilka problem ser du med nuvarande kodstruktur när vi ska lägga till kollision med plattformar?
 
 ## Nästa steg
 
-För att lära dig om kollisionsdetektering och hur spelaren kan interagera med andra objekt, byt till `collision` branchen och se [collision.md](collision.md).
+För att lära dig om kollisionsdetektering och hur spelaren kan interagera med andra objekt, byt till `02-collision` branchen.
 
+```bash
+git checkout 02-collision
+```
+
+Öppna sedan [Steg 2 - Collision](02-collision.md).

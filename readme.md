@@ -2,15 +2,15 @@
 
 ## Introduktion
 
-Det här repot är skapat med vite och innehåller en enkel spelmotor för 2D-spel med JavaScript och HTML5 Canvas. Spelmotorn hanterar grundläggande funktioner som spelobjekt, uppdateringsloop, rendering och input-hantering.
+Det här repot är skapat med Vite och innehåller en enkel spelmotor för 2D-spel med JavaScript och HTML5 Canvas. Spelmotorn hanterar grundläggande funktioner som spelobjekt, uppdateringsloop, rendering och input-hantering.
 
-Vi använder Vite för att snabbt kunna starta och utveckla spelet med moderna JavaScript-funktioner och modulhantering. Kommandot för att initiera ett projkekt med Vite är:
+Vi använder Vite för att snabbt kunna starta och utveckla spelet med moderna JavaScript-funktioner och modulhantering. Kommandot för att initiera ett projekt med Vite är:
 
 ```bash
 npm create vite@latest
 ```
 
-Men det är redan gjort i  detta repo, så du kan klona det direkt och börja utveckla ditt spel.
+Men det är redan gjort i detta repo, så du kan klona det direkt och börja utveckla ditt spel.
 
 ```bash
 git clone <repo-url>
@@ -132,7 +132,25 @@ Det här repot ger en grundläggande struktur för att skapa 2D-spel med JavaScr
 6. Vad händer i main.js och varför behövs requestAnimationFrame?
 7. Hur sparar InputHandler information om nedtryckta tangenter?
 8. Vilken Canvas-metod rensar skärmen mellan varje frame och varför behövs det?
+9. Varför måste vi rensa canvas varje frame? Vad händer om vi skippar `clearRect()`?
+10. Beskriv hela flödet från tangent-tryck till pixlar på skärmen. Vilka klasser är involverade?
 
 ## Nästa steg
 
-Fortsätt läsa  i [player](player.md) för att lära dig mer om input-hantering och att skapa en spelarkaraktär!
+Denna tutorial är uppdelad i steg som följer en logisk progression. Varje steg bygger på det föregående:
+
+1. **[Player](01-player.md)** - Skapa en spelarklass med input och rörelse
+2. **[Collision](02-collision.md)** - AABB-kollisionsdetektering
+3. **[Physics](03-physics.md)** - Gravitation, hopp och plattformar
+4. **[Collectibles](04-collectibles.md)** - Mynt, score och UI
+5. **[Enemies](05-enemies.md)** - Fiender, health och damage
+
+Varje steg har sin egen git-branch (t.ex. `01-player`, `02-collision`, etc.) där koden för det steget finns implementerad.
+
+När du har jobbat klart med materialet i det här steget, byt till nästa branch för att fortsätta till nästa del i guiden.
+
+```bash
+git checkout 01-player
+```
+
+Öppna sedan filen [Steg 1 - Player](01-player.md) för att fortsätta!

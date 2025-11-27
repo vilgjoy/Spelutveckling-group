@@ -1,12 +1,28 @@
-# Kollisionsdetektering
+# Steg 2 - Kollisionsdetektering
 
-I den här delen lär vi oss om kollisionsdetektering - hur vi kan upptäcka när två objekt i spelet kolliderar med varandra. Detta är fundamentalt för att skapa interaktiva spel där spelaren kan plocka upp föremål, stöta på hinder, eller ta skada från fiender.
+Vi lär oss hur två objekt kan upptäcka när de kolliderar - fundamentalt för interaktiva spel.
+
+## Vad lär vi oss?
+
+I detta steg fokuserar vi på:
+- **AABB-kollision** - Axis-Aligned Bounding Box, enklaste kollisionsformen
+- **Single Responsibility** - Vem äger ansvaret för kollisionskontroll?
+- **Riktningsdetektering** - Från vilket håll sker kollisionen?
+- **Separation av ansvar** - Player vs Game vs GameObject
+
+## Översikt
+
+För att implementera kollisioner behöver vi:
+1. **intersects() metod** - Enkel ja/nej-kontroll av överlapp
+2. **getCollisionData() metod** - Detaljerad info om riktning och överlapp
+3. **Kollisionskontroll i Game.js** - Game organiserar kontrollen
+4. **Separation av Player** - Lagra spelaren separat från gameObjects
 
 ## Förutsättningar
 
 Innan du börjar med kollisioner bör du ha:
 - En fungerande `GameObject`-klass
-- En `Player`-klass som kan röra sig (se [player.md](player.md))
+- En `Player`-klass som kan röra sig (se [player.md](01-player.md))
 - Minst en annan typ av objekt (t.ex. `Rectangle`)
 
 ## Vad är AABB-kollision?
@@ -58,7 +74,7 @@ intersects(other) {
 
 ## Var ska kollision kontrolleras?
 
-Om ni minns så har vi pratat en hel del om vad som ansvarar för vad i den kod vi skriver. I det här fallet så måste vi fråga oss var kollisionskontrollen ska ske. Är det spelaren som ansvarar för att kolla om den kolliderar med andra objekt, eller är det spelet som helhet som ska göra det?
+När vi frågar oss var kollisionskontrollen ska ske tänker vi på ansvar: Är det spelaren som ansvarar för att kolla om den kolliderar med andra objekt, eller är det spelet som helhet?
 
 Det är `Game`-klassens ansvar att kontrollera kollisioner. Detta följer **Single Responsibility Principle**:
 
@@ -229,15 +245,16 @@ I den här delen så har vi använt våra klasser för att faktiskt implementera
 4. Varför ritar vi spelaren sist i `draw()`-metoden?
 5. Vad händer om spelaren rör sig väldigt snabbt mot ett tunt objekt? (detta kallas tunneling)
 6. Hur kan vi ändra färgen på ett objekt vid kollision för visuell feedback?
+7. Hur skulle du använda AABB-kollision för att detektera om spelaren står på en plattform? Vad behöver du veta?
 
 ## Nästa steg
 
 Med kollisionsdetektering på plats kan vi nu gå vidare till att implementera mer avancerad fysik, som gravitation och hopp. Vi kommer också att titta på hur vi kan hantera olika typer av objekt och deras interaktioner med spelaren.
 
-Byt branch till `physics` och fortsätt till nästa del i guiden!
+Byt branch till `03-physics` och fortsätt till nästa del i guiden!
 
 ```bash
-git checkout physics
+git checkout 03-physics
 ```
 
-Öppna sedan filen [physics.md](physics.md) för att fortsätta!
+Öppna sedan filen [Steg 3 - Fysik](03-physics.md) för att fortsätta!
