@@ -5,6 +5,7 @@ import Coin from './Coin.js'
 import Enemy from './Enemy.js'
 import UserInterface from './UserInterface.js'
 import Camera from './Camera.js'
+import Projectile from './Projectile.js'
 
 export default class Game {
     constructor(width, height) {
@@ -102,9 +103,17 @@ export default class Game {
             new Enemy(this, 1400, this.height - 200, 40, 40),
             new Enemy(this, 1800, this.height - 240, 40, 40, 150),
         ]
+        
+        // Projektiler
+        this.projectiles = []
 
         // Skapa andra objekt i spelet (valfritt)
         this.gameObjects = []
+    }
+    
+    addProjectile(x, y, directionX) {
+        const projectile = new Projectile(this, x, y, directionX)
+        this.projectiles.push(projectile)
     }
     
     restart() {
@@ -184,9 +193,31 @@ export default class Game {
             }
         })
         
+        // Uppdatera projektiler
+        this.projectiles.forEach(projectile => {
+            projectile.update(deltaTime)
+            
+            // Kolla kollision med fiender
+            this.enemies.forEach(enemy => {
+                if (projectile.intersects(enemy) && !enemy.markedForDeletion) {
+                    enemy.markedForDeletion = true
+                    projectile.markedForDeletion = true
+                    this.score += 50 // Bonuspoäng för att döda fiende
+                }
+            })
+            
+            // Kolla kollision med plattformar/världen
+            this.platforms.forEach(platform => {
+                if (projectile.intersects(platform)) {
+                    projectile.markedForDeletion = true
+                }
+            })
+        })
+        
         // Ta bort alla objekt markerade för borttagning
         this.coins = this.coins.filter(coin => !coin.markedForDeletion)
         this.enemies = this.enemies.filter(enemy => !enemy.markedForDeletion)
+        this.projectiles = this.projectiles.filter(projectile => !projectile.markedForDeletion)
 
         // Förhindra att spelaren går utöver world bounds
         if (this.player.x < 0) {
@@ -230,6 +261,13 @@ export default class Game {
         this.enemies.forEach(enemy => {
             if (this.camera.isVisible(enemy)) {
                 enemy.draw(ctx, this.camera)
+            }
+        })
+        
+        // Rita projektiler med camera offset
+        this.projectiles.forEach(projectile => {
+            if (this.camera.isVisible(projectile)) {
+                projectile.draw(ctx, this.camera)
             }
         })
         

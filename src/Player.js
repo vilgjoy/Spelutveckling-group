@@ -24,6 +24,12 @@ export default class Player extends GameObject {
         this.invulnerable = false // Immun mot skada efter att ha blivit träffad
         this.invulnerableTimer = 0
         this.invulnerableDuration = 1000 // 1 sekund i millisekunder
+        
+        // Shooting system
+        this.canShoot = true
+        this.shootCooldown = 300 // millisekunder mellan skott
+        this.shootCooldownTimer = 0
+        this.lastDirectionX = 1 // Kom ihåg senaste riktningen för skjutning
     }
 
     update(deltaTime) {
@@ -31,9 +37,11 @@ export default class Player extends GameObject {
         if (this.game.inputHandler.keys.has('ArrowLeft')) {
             this.velocityX = -this.moveSpeed
             this.directionX = -1
+            this.lastDirectionX = -1 // Spara riktning
         } else if (this.game.inputHandler.keys.has('ArrowRight')) {
             this.velocityX = this.moveSpeed
             this.directionX = 1
+            this.lastDirectionX = 1 // Spara riktning
         } else {
             this.velocityX = 0
             this.directionX = 0
@@ -74,6 +82,31 @@ export default class Player extends GameObject {
                 this.invulnerable = false
             }
         }
+        
+        // Uppdatera shoot cooldown
+        if (!this.canShoot) {
+            this.shootCooldownTimer -= deltaTime
+            if (this.shootCooldownTimer <= 0) {
+                this.canShoot = true
+            }
+        }
+        
+        // Skjut med X-tangenten
+        if ((this.game.inputHandler.keys.has('x') || this.game.inputHandler.keys.has('X')) && this.canShoot) {
+            this.shoot()
+        }
+    }
+    
+    shoot() {
+        // Skjut i senaste riktningen spelaren rörde sig
+        const projectileX = this.x + this.width / 2
+        const projectileY = this.y + this.height / 2
+        
+        this.game.addProjectile(projectileX, projectileY, this.lastDirectionX)
+        
+        // Sätt cooldown
+        this.canShoot = false
+        this.shootCooldownTimer = this.shootCooldown
     }
     
     takeDamage(amount) {
