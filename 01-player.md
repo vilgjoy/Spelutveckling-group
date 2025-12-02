@@ -1,6 +1,6 @@
 # Steg 1 - Player
 
-Vi skapar en spelarklass med tangentbordskontroll och rörelse - grunden för alla interaktiva spel.
+Vi skapar en spelarklass med tangentbordskontroll och rörelse - grunden för alla(?) interaktiva spel.
 
 ## Vad lär vi oss?
 
