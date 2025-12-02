@@ -81,7 +81,7 @@ För att kunna implementera detta så behöver vi lägga till några nya egenska
 
 ```javascript
 // Fysik
-this.gravity = 0.001 // pixels per millisekund^2
+this.gravity = 0.001 // gravitationskraft
 this.friction = 0.00015 // luftmotstånd för att bromsa fallhastighet
 ```
 
@@ -93,14 +93,14 @@ this.velocityY += this.game.gravity * deltaTime
 
 // Applicera luftmotstånd (friktion)
 if (this.velocityY > 0) {
-    this.velocityY -= this.game.friction * deltaTime
+    this.velocityY -= this.game.friction * deltaTime // vi minskar hastigheten när vi faller
     if (this.velocityY < 0) this.velocityY = 0
 }
 ```
 
 Vi har i det här fallet också tagit bort koden för att styra spelaren vertikalt med piltangenterna, eftersom gravitationen nu sköter den vertikala rörelsen.
 
-För att behålla funktionen med våra ögon som tittar upp och ner kan vi lägga till följande kod i slutet av `update()` metoden i `Player.js`:
+För att behålla funktionen med våra ögon som tittar upp och ner kan vi lägga till följande kod i slutet av `update()` metoden i `Player.js`. Det ersätter den tidigare koden för att styra ögonriktningen med piltangenterna.
 
 ```javascript
 // Sätt directionY baserat på vertikal hastighet för ögonrörelse
@@ -125,9 +125,11 @@ if (this.game.inputHandler.keys.has(' ') && this.isGrounded) {
 }
 ```
 
-Det är sedan den tidigare koden för att hanttera gravitationen som gör att spelaren faller nedåt igen efter hoppet.
+Tillsammans med koden för gravitationen så kommer detta att göra att spelaren kan hoppa uppåt när mellanslag trycks ned, och sedan falla nedåt igen på grund av gravitationen. Hur mycket spelaren ska hoppa styrs av `this.jumpPower` egenskapen som vi redan har definierat i `Player.js`. Men hur högt spelaren kan hoppa beror också på gravitationsvärdet i `Game.js`. 
 
 **Missa inte att lägga till this.isGrounded = false i konstruktorn i Player.js!**
+
+Egenskaper som `gravity`, `friction` och `jumpPower` är viktiga för att skapa en bra spelkänsla, så experimentera gärna med olika värden för att hitta en känsla som passar ditt spel!
 
 ## Hur landar vi? Kollisionshantering
 
@@ -177,7 +179,13 @@ Som du ser så returnerar denna metod ett objekt med en `direction` egenskap som
 
 Innan vi är färdiga med det här stora steget så behöver vi uppdatera `update()` metoden i `Game.js` för att hantera kollisioner mellan spelaren och plattformarna.
 
-Koden fungerar så att den itererar genom alla plattformar och kontrollerar om spelaren kolliderar med någon av dem. Om en kollision upptäcks så justeras spelarens position och hastighet baserat på kollisionsriktningen.
+```
+för varje platform i plattformar:
+    kollision = kontrollera kollision mellan spelare och platform
+
+    om kollision finns:
+        kontrollera riktning och justera spelarens position och hastighet därefter
+```
 
 ```javascript
 // Kontrollera kollisioner med plattformar
@@ -238,7 +246,19 @@ Nu finns det verkligen många möjligheter till nya funktioner i spelet. Du får
 
 En ganska vanlig funktion i plattformsspel är dubbelhopp, där spelaren kan hoppa en gång till medan hen är i luften. För att implementera detta kan du lägga till en räknare för hopp i `Player.js` som håller reda på hur många hopp spelaren har gjort sedan senaste markkontakt.
 
-Du kan sen använda detta i villkoret för om spelaren får hoppa igen. Det sätter alltså `isGrounded` ur funktion när spelaren är i luften och bara har hoppat en gång.
+```
+Skapa variabler:
+    jumpCount ← 0
+    maxJumps ← 2  // antal tillåtna hopp
+
+I update
+    OM hopp trycks OCH jumpCount < maxJumps:
+        utför hopp
+        jumpCount++
+
+    när spelaren landar på en plattform
+        jumpCount ← 0
+```
 
 ### Dash
 
@@ -283,6 +303,8 @@ if (this.game.inputHandler.keys.has(' ') && (this.isGrounded || this.isTouchingW
 ### Rörliga plattformar
 
 Rörliga plattformar kan lägga till en extra dimension av utmaning i spelet. Du kan skapa en ny klass `MovingPlatform` som ärver från `Platform` och lägger till rörelse i `update()` metoden. Plattformen kan röra sig horisontellt eller vertikalt mellan två punkter. Du kan skapa och lägga till dessa plattformar i `Game.js` på samma sätt som vanliga plattformar.
+
+Eftersom vi designar med samma mönster och kan använda `update()` och `draw()` metoderna så bör dina nya platformar röra sig även om det är placerade i samma lista som de statiska plattformar.
 
 ## Sammanfattning
 
