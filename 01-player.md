@@ -78,17 +78,34 @@ Om du vill kan du lägga till kod för att stoppa spelaren från att gå utanfö
 
 ```javascript
 // stoppa från att gå utanför canvas
-if (this.x < 0) this.x = 0
-if (this.x + this.width > this.game.width) this.x = this.game.width - this.width
-if (this.y < 0) this.y = 0
-if (this.y + this.height > this.game.height) this.y = this.game.height - this.height
+if (this.x < 0) {
+    this.x = 0
+}
+if (this.x + this.width > this.game.width) {
+    this.x = this.game.width - this.width
+}
+if (this.y < 0) {
+    this.y = 0
+}
+if (this.y + this.height > this.game.height) {
+    this.y = this.game.height - this.height
+}
 ```
 
 ## Renderingsmetod
 
 I draw ritar vi ut spelaren som en rektangel, precis som i `Rectangle`-klassen. Men här lägger vi även till ögon som "tittar" i den riktning spelaren rör sig för att ge karaktär.
 
-Vi använder `directionX` och `directionY` (från `update`-metoden) för att påverka var ögonen ritas.
+Vi använder `directionX` och `directionY` (från `update`-metoden) för att påverka var ögonen ritas. Vi flyttar pupillerna lite genom att multiplicera positionen med riktningen.
+
+```javascript
+ctx.fillRect(
+    this.x + this.width * 0.25 + this.directionX * this.width * 0.05, 
+    this.y + this.height * 0.25 + this.directionY * this.width * 0.05, 
+    this.width * 0.1, 
+    this.height * 0.1
+)
+```
 
 ### Rita mun
 
@@ -108,19 +125,24 @@ Detta ger spelaren ett enkelt ansikte med ögon och mun, vilket gör den mer lev
 
 ## Uppgifter
 
-### Glad och ledsen mun
-
-Hur kan vi göra spelarens mun mer uttrycksfull? Experimentera med ritmetoderna för att göra munnen glad eller ledsen. Testa att styra det med inputs, eller varför inte göra spelaren ledsen när den inte rör sig?
-
-## Uppgifter
+Här är några förslag på hur du kan vidareutveckla spelaren och på så sätt lära dig mer om hur spelmotorn fungerar.
 
 ### Glad och ledsen mun
 
 Hur kan vi göra spelarens mun mer uttrycksfull? Experimentera med ritmetoderna för att göra munnen glad eller ledsen. Testa att styra det med inputs, eller varför inte göra spelaren ledsen när den inte rör sig?
+
+Ett "enkelt" sätt är att använda en bokstav för munnen, du kan rita text med `ctx.fillText` eller `ctx.strokeText`.
 
 ### Animationer
 
-Kan du göra spelaren mer levande genom att lägga till animationer? Till exempel att ögonen blinkar, munnen rör sig, eller att spelaren "hoppar" när den rör sig snabbt?
+Kan du göra spelaren mer levande genom att lägga till animationer? Ett sätt är att tillexempel inte rita ut pupillerna varje frame, utan bara varannan frame för att simulera blinkning. Vi kan göra det genom att spara om vi har blinkat föregående frame.
+
+```javascript
+this.hasBlinked = !this.hasBlinked
+if (!this.hasBlinked) {
+    // rita pupiller
+}
+```
 
 ### Accelererande rörelse
 
