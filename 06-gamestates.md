@@ -1,6 +1,6 @@
 # Steg 6 - Game States
 
-Vi implementerar vinstvillkor, förlustvillkor och möjligheten att starta om spelet - grundläggande för att skapa en komplett spelupplevelse.
+För att det ska gå att kalla spel så kanske det är så att vi behöver ett sätt att vinna på, förlora på och starta om?
 
 ## Vad lär vi oss?
 
@@ -20,7 +20,7 @@ För att skapa en komplett spelloop behöver vi:
 4. **State-baserad Update** - Uppdatera bara när PLAYING
 5. **Overlay Screens** - Rita meddelanden vid GAME_OVER/WIN
 6. **Restart Function** - Återställ allt med R-tangenten
-7. **Init Method** - Centralisera initialization logic
+7. **Init Method** - Centraliserad startfunktion
 
 ## Problemet - Oändlig spelloop utan mål
 
@@ -33,6 +33,8 @@ Hittills har vårt spel ingen början eller slut:
 - Ingen känsla av progression eller achievement
 - Frustration när spelaren dör
 - Ingen motivation att samla alla mynt
+
+Det är liksom ganska meningslöst.
 
 ## State Machine - Vad är det?
 
@@ -218,7 +220,10 @@ draw(ctx) {
 }
 ```
 
-### HUD (Heads-Up Display):
+### HUD (Heads-Up Display)
+
+Där vi samlar all information som spelaren behöver se under spelets gång, som poäng, antal mynt och hälsa.
+
 ```javascript
 drawHUD(ctx) {
     ctx.save()
@@ -231,25 +236,65 @@ drawHUD(ctx) {
     ctx.shadowOffsetY = 2
     ctx.shadowBlur = 3
     
-    // Rita score, coins, health
+    // Rita score och coins
     ctx.fillText(`Score: ${this.game.score}`, 20, 40)
     ctx.fillText(`Coins: ${this.game.coinsCollected}`, 20, 70)
-    ctx.fillText(`Health: ${this.game.player.health}/${this.game.player.maxHealth}`, 20, 100)
     
-    // Rita health bars som hjärtan
-    for (let i = 0; i < this.game.player.maxHealth; i++) {
-        const heartX = 20 + i * 30
-        const heartY = 110
-        
-        ctx.fillStyle = i < this.game.player.health ? '#FF0000' : '#333333'
-        ctx.fillRect(heartX, heartY, 20, 20)
+    ctx.restore()
+    
+    // Rita health bar (egen metod)
+    this.drawHealthBar(ctx, 20, 90)
+}
+
+drawHealthBar(ctx, x, y) {
+    const barWidth = 200
+    const barHeight = 20
+    const healthPercent = this.game.player.health / this.game.player.maxHealth
+    
+    ctx.save()
+    
+    // Bakgrund (grå)
+    ctx.fillStyle = '#333333'
+    ctx.fillRect(x, y, barWidth, barHeight)
+    
+    // Nuvarande health (färgad bar)
+    const healthWidth = barWidth * healthPercent
+    
+    // Färg baserat på health procent
+    if (healthPercent > 0.5) {
+        ctx.fillStyle = '#4CAF50' // Grön - god hälsa
+    } else if (healthPercent > 0.25) {
+        ctx.fillStyle = '#FFC107' // Gul - varning
+    } else {
+        ctx.fillStyle = '#F44336' // Röd - kritisk
     }
+    
+    ctx.fillRect(x, y, healthWidth, barHeight)
+    
+    // Vit kant runt baren
+    ctx.strokeStyle = '#FFFFFF'
+    ctx.lineWidth = 2
+    ctx.strokeRect(x, y, barWidth, barHeight)
     
     ctx.restore()
 }
 ```
 
-### Game Over Overlay:
+**Varför en separat drawHealthBar() metod?**
+- **Separation of Concerns** - Varje UI-komponent har sin egen metod
+- **Återanvändbar** - Kan rita health bar på andra ställen (boss health, etc)
+- **Parameteriserad** - x, y position kan anges dynamiskt
+- **Lättare att modifiera** - Ändra bara health bar utan att röra HUD-logik
+
+**Health bar färgkodning:**
+- Grön (>50%) = God hälsa, inga bekymmer
+- Gul (25-50%) = Varning, var försiktig
+- Röd (≤25%) = Kritiskt, hitta health snart!
+
+### Game Over Overlay
+
+När spelaren dör visar vi en overlay med "Game Over" text och slutpoäng.
+
 ```javascript
 drawGameOver(ctx) {
     // Halvgenomskinlig svart bakgrund (dimma)
@@ -280,7 +325,10 @@ drawGameOver(ctx) {
 }
 ```
 
-### Win Overlay:
+### Win Overlay
+
+På samma sätt som vid Game Over visar vi en overlay med "Victory!" text och slutpoäng.
+
 ```javascript
 drawWin(ctx) {
     // Halvgenomskinlig grön bakgrund (victory glow)
@@ -317,7 +365,7 @@ drawWin(ctx) {
 
 ## Viktig buggfix - deltaTime initialization
 
-**VIKTIGT:** Det finns en kritisk bugg i spelloopen som kan få spelaren att falla igenom världen!
+**VIKTIGT:** Det finns en kritisk bugg i spelloopen som kan få spelaren att falla igenom världen! Detta förklara en del mystiskt beteende i de tidigare stegen (jag har haft en webbläsare som kört spelet ganska länge i bakgrunden).
 
 ### Problemet
 
@@ -325,9 +373,8 @@ Vid första framen kan `deltaTime` bli **jättestort**:
 - `lastTime` börjar på 0
 - `timeStamp` är tiden sedan sidan laddades (kan vara flera tusen millisekunder)
 - Detta ger `deltaTime = timeStamp - 0` = enormt värde!
-- Spelaren faller 43000+ pixels och hamnar långt under världen
 
-### Lösningen - Två enkla steg
+### Lösningen - Två steg
 
 **1. Initiera lastTime korrekt (main.js):**
 ```javascript
@@ -343,7 +390,10 @@ const runGame = (timeStamp) => {
 }
 ```
 
-**2. Cap deltaTime till max 100ms (main.js):**
+**2. Begränsa deltaTime till max 100ms (main.js):**
+
+Det finns ingen anledning att den ska kunna vara större än 100ms (0.1 sekund), eftersom det kan orsaka oväntade beteenden i spelet.
+
 ```javascript
 const runGame = (timeStamp) => {
     // ... lastTime check från ovan
@@ -400,23 +450,6 @@ const runGame = (timeStamp) => {
 }
 ```
 
-## RGBA Colors - Transparens
-
-```javascript
-ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'
-//                    R  G  B  Alpha
-//                    ↓  ↓  ↓  ↓
-// R (Red):   0-255 (0 = ingen röd)
-// G (Green): 0-255 (0 = ingen grön)
-// B (Blue):  0-255 (0 = ingen blå)
-// A (Alpha): 0-1   (0 = helt transparent, 1 = helt opak)
-```
-
-**Exempel:**
-- `rgba(0, 0, 0, 0.7)` - Svart med 70% opacity (mörk dimma)
-- `rgba(255, 0, 0, 0.5)` - Röd med 50% opacity
-- `rgba(0, 255, 0, 0.3)` - Grön med 30% opacity (lätt grön glöd)
-
 ## Testa spelet
 
 Nu kan du:
@@ -429,9 +462,7 @@ Nu kan du:
 
 ### Pause-funktionalitet
 
-**Du lär dig att hantera fler game states.**
-
-Lägg till en PAUSED state som aktiveras med Escape-tangenten:
+Lägg till en PAUSED state som aktiveras med Escape-tangenten, det ger oss fler sätt att öva på att använda game states.
 
 ```javascript
 // I constructor
@@ -457,7 +488,9 @@ if (this.gameState === 'PAUSED') {
 
 ### High score system
 
-**Du lär dig att spara data med localStorage.**
+Att skapa ett highscore system är ett bra sätt att öka spelvärdet och ge spelaren en extra utmaning. Det kan även kombineras med en timer för att tillåta "speed-runs".
+
+För att spara ett värde i webbläsaren kan vi använda `localStorage`. `localStorage` låter oss lagra data som finns kvar även efter att sidan har stängts eller uppdaterats. Du skapar variabler i `localStorage` med nycklar och värden som är strängar. För att sätta dem använder du `localStorage.setItem(key, value)` och för att läsa dem använder du `localStorage.getItem(key)`.
 
 Spara högsta score mellan spel-sessioner:
 
@@ -477,9 +510,7 @@ ctx.fillText(`High Score: ${this.highScore}`, 20, 130)
 
 ### Timer-baserad challenge
 
-**Du lär dig att skapa tidsbegränsade utmaningar.**
-
-Lägg till en timer - spelaren måste samla alla mynt innan tiden tar slut:
+Lägg till en timer - spelaren måste samla alla mynt innan tiden tar slut. Koden går såklart att "vända på" för att spara hur lång tid det tog för spelaren att klara spelet.
 
 ```javascript
 // I init()
@@ -500,133 +531,10 @@ const secondsLeft = Math.ceil(this.game.timeRemaining / 1000)
 ctx.fillText(`Time: ${secondsLeft}s`, 20, 100)
 ```
 
-### Levels system
-
-**Du lär dig att skapa progression mellan nivåer.**
-
-Lägg till level progression - när spelaren vinner, gå till nästa nivå:
-
-```javascript
-// I constructor
-this.currentLevel = 1
-this.maxLevel = 3
-
-// I init()
-this.loadLevel(this.currentLevel)
-
-loadLevel(levelNumber) {
-    // Återställ state
-    this.gameState = 'PLAYING'
-    this.score = 0
-    this.coinsCollected = 0
-    
-    // Ladda level-specifik data
-    if (levelNumber === 1) {
-        // Lätt nivå - få fiender
-        this.enemies = [
-            new Enemy(this, 200, this.height - 220, 40, 40, 80),
-        ]
-    } else if (levelNumber === 2) {
-        // Medel nivå - fler fiender
-        this.enemies = [
-            new Enemy(this, 200, this.height - 220, 40, 40, 80),
-            new Enemy(this, 450, this.height - 240, 40, 40),
-        ]
-    }
-    // ... etc
-}
-
-// När spelaren vinner
-if (this.coinsCollected === this.totalCoins && this.gameState === 'PLAYING') {
-    if (this.currentLevel < this.maxLevel) {
-        this.currentLevel++
-        this.loadLevel(this.currentLevel)
-    } else {
-        this.gameState = 'WIN' // Alla levels klara!
-    }
-}
-```
-
-### Animerad win-screen
-
-**Du lär dig att skapa juice med animationer.**
-
-Lägg till animerade confetti eller stjärnor på win-screen:
-
-```javascript
-// I drawWin()
-// Animera text med scale
-const scale = 1 + Math.sin(Date.now() / 200) * 0.1
-ctx.save()
-ctx.translate(this.width / 2, this.height / 2 - 50)
-ctx.scale(scale, scale)
-ctx.fillText('VICTORY!', 0, 0)
-ctx.restore()
-
-// Rita fallande konfetti
-if (!this.confetti) this.confetti = []
-// Skapa nya confetti partiklar
-for (let i = 0; i < 5; i++) {
-    this.confetti.push({
-        x: Math.random() * this.width,
-        y: -10,
-        speed: 0.1 + Math.random() * 0.2,
-        color: ['red', 'yellow', 'blue', 'green'][Math.floor(Math.random() * 4)]
-    })
-}
-// Rita och uppdatera
-this.confetti.forEach((c, i) => {
-    c.y += c.speed * deltaTime
-    ctx.fillStyle = c.color
-    ctx.fillRect(c.x, c.y, 5, 10)
-    if (c.y > this.height) this.confetti.splice(i, 1)
-})
-```
-
-### Smooth state transitions
-
-**Du lär dig att göra övergångar mer eleganta.**
-
-Lägg till fade-in/fade-out mellan states:
-
-```javascript
-// I constructor
-this.transitionAlpha = 0
-this.transitioning = false
-
-// När state ändras
-changeState(newState) {
-    this.transitioning = true
-    // Fade out
-    const fadeOut = setInterval(() => {
-        this.transitionAlpha += 0.05
-        if (this.transitionAlpha >= 1) {
-            clearInterval(fadeOut)
-            this.gameState = newState
-            // Fade in
-            const fadeIn = setInterval(() => {
-                this.transitionAlpha -= 0.05
-                if (this.transitionAlpha <= 0) {
-                    clearInterval(fadeIn)
-                    this.transitioning = false
-                }
-            }, 16)
-        }
-    }, 16)
-}
-
-// I draw() (överst)
-if (this.transitioning) {
-    ctx.fillStyle = `rgba(0, 0, 0, ${this.transitionAlpha})`
-    ctx.fillRect(0, 0, this.width, this.height)
-}
-```
-
 ## Sammanfattning
 
 Vi har nu implementerat ett komplett game state system!
 
-**Vad vi gjorde:**
 - State machine med PLAYING, GAME_OVER, WIN
 - Win condition (alla mynt samlade)
 - Lose condition (health = 0)
@@ -634,25 +542,15 @@ Vi har nu implementerat ett komplett game state system!
 - Overlay screens med score och instruktioner
 - Init/restart pattern för återanvändbar kod
 
-**Nyckelkoncept:**
-- State machine = Ett tillstånd åt gången
-- Conditions trigger state changes
-- State styr vad som uppdateras och ritas
-- Overlay screens ger feedback
-- Init method = DRY principle
-
 ## Testfrågor
 
 1. Vad är en state machine? Beskriv de tre states vårt spel har och hur man övergår mellan dem.
 2. Varför separerar vi `init()` från `constructor()`? Vilka fördelar ger detta pattern?
 3. Varför kollar vi restart-input (`r`) **före** `if (this.gameState !== 'PLAYING') return`?
-4. Förklara skillnaden mellan `rgb()` och `rgba()`. När använder vi rgba?
-5. Varför ritar vi spelvärlden även när `gameState === 'GAME_OVER'`? Varför inte bara svart skärm?
-6. Vad händer om vi glömmer `this.totalCoins = this.coins.length` i init()? Hur påverkar det win condition?
-7. Varför använder vi `ctx.save()` och `ctx.restore()` i drawGameOver/drawWin?
-8. **[BUGGFIX]** Varför kan `deltaTime` bli jättestort vid första framen? Förklara problemet och de två delarna av lösningen.
-9. **[BUGGFIX]** Varför räcker det med `lastTime === 0` check och deltaTime cap? Varför behövs ingen separat restart-hantering?
-10. Beskriv flödet från att spelaren samlar sista myntet till att win-screen visas. Vilka metoder anropas?
+4. Varför ritar vi spelvärlden även när `gameState === 'GAME_OVER'`? Varför inte bara svart skärm?
+5. Vad händer om vi glömmer `this.totalCoins = this.coins.length` i init()? Hur påverkar det win condition?
+6. Varför använder vi `ctx.save()` och `ctx.restore()` i drawGameOver/drawWin?
+7. Beskriv flödet från att spelaren samlar sista myntet till att win-screen visas. Vilka metoder anropas?
 
 ## Nästa steg
 
