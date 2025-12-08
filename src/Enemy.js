@@ -1,6 +1,4 @@
 import GameObject from './GameObject.js'
-import idleSprite from './assets/Pixel Adventure 1/Main Characters/Mask Dude/Idle (32x32).png'
-import runSprite from './assets/Pixel Adventure 1/Main Characters/Mask Dude/Run (32x32).png'
 
 export default class Enemy extends GameObject {
     constructor(game, x, y, width, height, patrolDistance = null) {
@@ -21,26 +19,11 @@ export default class Enemy extends GameObject {
         
         this.damage = 1 // Hur mycket skada fienden gör
         
-        // Sprite animation system
-        this.spriteLoaded = false
-        this.animations = {
-            idle: { image: new Image(), frames: 11, row: 0 },
-            run: { image: new Image(), frames: 12, row: 0 }
-        }
-        
-        // Ladda sprites
-        this.animations.idle.image.src = idleSprite
-        this.animations.run.image.src = runSprite
-        
-        // Vänta på att första bilden laddas
-        this.animations.idle.image.onload = () => {
-            this.spriteLoaded = true
-        }
+        // TODO: Ladda sprites här
+        // Använd this.loadSprite() metoden från GameObject
+        // Exempel: this.loadSprite('idle', idleSprite, frames, frameInterval)
         
         this.currentAnimation = 'run'
-        this.frameIndex = 0
-        this.frameTimer = 0
-        this.frameInterval = 100 // millisekunder per frame
     }
 
     update(deltaTime) {
@@ -78,18 +61,13 @@ export default class Enemy extends GameObject {
         
         // Uppdatera animation state
         if (this.velocityX !== 0 && this.isGrounded) {
-            this.currentAnimation = 'run'
+            this.setAnimation('run')
         } else {
-            this.currentAnimation = 'idle'
+            this.setAnimation('idle')
         }
         
         // Uppdatera animation frame
-        this.frameTimer += deltaTime
-        if (this.frameTimer >= this.frameInterval) {
-            const anim = this.animations[this.currentAnimation]
-            this.frameIndex = (this.frameIndex + 1) % anim.frames
-            this.frameTimer = 0
-        }
+        this.updateAnimation(deltaTime)
     }
 
     handlePlatformCollision(platform) {
@@ -141,46 +119,10 @@ export default class Enemy extends GameObject {
         const screenX = camera ? this.x - camera.x : this.x
         const screenY = camera ? this.y - camera.y : this.y
         
-        // Rita sprite om den är laddad, annars rita färgad rektangel
-        if (this.spriteLoaded) {
-            const anim = this.animations[this.currentAnimation]
-            const frameWidth = anim.image.width / anim.frames
-            const frameHeight = anim.image.height
-            
-            // Spara context state för flip
-            ctx.save()
-            
-            // Flippa om fienden rör sig åt vänster
-            if (this.direction === -1) {
-                ctx.translate(screenX + this.width, screenY)
-                ctx.scale(-1, 1)
-                ctx.drawImage(
-                    anim.image,
-                    this.frameIndex * frameWidth, // source x
-                    0,                            // source y
-                    frameWidth,                   // source width
-                    frameHeight,                  // source height
-                    0,                            // dest x (0 efter flip)
-                    0,                            // dest y
-                    this.width,                   // dest width
-                    this.height                   // dest height
-                )
-            } else {
-                ctx.drawImage(
-                    anim.image,
-                    this.frameIndex * frameWidth, // source x
-                    0,                            // source y
-                    frameWidth,                   // source width
-                    frameHeight,                  // source height
-                    screenX,                      // dest x
-                    screenY,                      // dest y
-                    this.width,                   // dest width
-                    this.height                   // dest height
-                )
-            }
-            
-            ctx.restore()
-        } else {
+        // Försök rita sprite, annars fallback till rektangel
+        const spriteDrawn = this.drawSprite(ctx, camera, this.direction === -1)
+        
+        if (!spriteDrawn) {
             // Fallback: Rita fienden som en röd rektangel
             ctx.fillStyle = this.color
             ctx.fillRect(screenX, screenY, this.width, this.height)

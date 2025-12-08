@@ -35,30 +35,13 @@ export default class Player extends GameObject {
         this.shootCooldownTimer = 0
         this.lastDirectionX = 1 // Kom ihåg senaste riktningen för skjutning
         
-        // Sprite animation system
-        this.spriteLoaded = false
-        this.animations = {
-            idle: { image: new Image(), frames: 11, row: 0 },
-            run: { image: new Image(), frames: 12, row: 0 },
-            jump: { image: new Image(), frames: 1, row: 0 },
-            fall: { image: new Image(), frames: 1, row: 0 }
-        }
-        
-        // Ladda sprites
-        this.animations.idle.image.src = idleSprite
-        this.animations.run.image.src = runSprite
-        this.animations.jump.image.src = jumpSprite
-        this.animations.fall.image.src = fallSprite
-        
-        // Vänta på att första bilden laddas
-        this.animations.idle.image.onload = () => {
-            this.spriteLoaded = true
-        }
+        // Sprite animation system - ladda sprites med olika hastigheter
+        this.loadSprite('idle', idleSprite, 11, 150)  // Långsammare idle
+        this.loadSprite('run', runSprite, 12, 80)     // Snabbare spring
+        this.loadSprite('jump', jumpSprite, 1)
+        this.loadSprite('fall', fallSprite, 1)
         
         this.currentAnimation = 'idle'
-        this.frameIndex = 0
-        this.frameTimer = 0
-        this.frameInterval = 100 // millisekunder per frame
     }
 
     update(deltaTime) {
@@ -106,22 +89,17 @@ export default class Player extends GameObject {
         
         // Uppdatera animation state baserat på rörelse
         if (!this.isGrounded && this.velocityY < 0) {
-            this.currentAnimation = 'jump'
+            this.setAnimation('jump')
         } else if (!this.isGrounded && this.velocityY > 0) {
-            this.currentAnimation = 'fall'
+            this.setAnimation('fall')
         } else if (this.velocityX !== 0) {
-            this.currentAnimation = 'run'
+            this.setAnimation('run')
         } else {
-            this.currentAnimation = 'idle'
+            this.setAnimation('idle')
         }
         
         // Uppdatera animation frame
-        this.frameTimer += deltaTime
-        if (this.frameTimer >= this.frameInterval) {
-            const anim = this.animations[this.currentAnimation]
-            this.frameIndex = (this.frameIndex + 1) % anim.frames
-            this.frameTimer = 0
-        }
+        this.updateAnimation(deltaTime)
         
         // Uppdatera invulnerability timer
         if (this.invulnerable) {
@@ -204,46 +182,10 @@ export default class Player extends GameObject {
         const screenX = camera ? this.x - camera.x : this.x
         const screenY = camera ? this.y - camera.y : this.y
         
-        // Rita sprite om den är laddad, annars rita färgad rektangel
-        if (this.spriteLoaded) {
-            const anim = this.animations[this.currentAnimation]
-            const frameWidth = anim.image.width / anim.frames
-            const frameHeight = anim.image.height
-            
-            // Spara context state för flip
-            ctx.save()
-            
-            // Flippa om spelaren rör sig åt vänster
-            if (this.lastDirectionX === -1) {
-                ctx.translate(screenX + this.width, screenY)
-                ctx.scale(-1, 1)
-                ctx.drawImage(
-                    anim.image,
-                    this.frameIndex * frameWidth, // source x
-                    0,                            // source y
-                    frameWidth,                   // source width
-                    frameHeight,                  // source height
-                    0,                            // dest x (0 efter flip)
-                    0,                            // dest y
-                    this.width,                   // dest width
-                    this.height                   // dest height
-                )
-            } else {
-                ctx.drawImage(
-                    anim.image,
-                    this.frameIndex * frameWidth, // source x
-                    0,                            // source y
-                    frameWidth,                   // source width
-                    frameHeight,                  // source height
-                    screenX,                      // dest x
-                    screenY,                      // dest y
-                    this.width,                   // dest width
-                    this.height                   // dest height
-                )
-            }
-            
-            ctx.restore()
-        } else {
+        // Försök rita sprite, annars fallback till rektangel
+        const spriteDrawn = this.drawSprite(ctx, camera, this.lastDirectionX === -1)
+        
+        if (!spriteDrawn) {
             // Fallback: Rita spelaren som en rektangel
             ctx.fillStyle = this.color
             ctx.fillRect(screenX, screenY, this.width, this.height)
