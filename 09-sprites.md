@@ -243,7 +243,47 @@ draw(ctx, camera = null) {
 
 ## Canvas drawImage - Sprite Slicing
 
-`ctx.drawImage()` har flera signatures. Vi använder 9-parameter versionen för att "klippa ut" ett frame från sprite sheet:
+Det här är den viktigaste delen att förstå för sprite animation! Vi använder `ctx.drawImage()` med 9 parametrar för att "klippa ut" ett frame från sprite sheet.
+
+### Visualisering av sprite slicing
+
+Tänk dig sprite sheet som ett "fönster" vi tittar genom:
+
+```
+Sprite Sheet: Run (32x32).png - Total storlek 384x32 pixels
+┌────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬────┐
+│ 0  │ 1  │ 2  │ 3  │ 4  │ 5  │ 6  │ 7  │ 8  │ 9  │ 10 │ 11 │  
+│32px│32px│32px│32px│32px│32px│32px│32px│32px│32px│32px│32px│
+└────┴────┴────┴────┴────┴────┴────┴────┴────┴────┴────┴────┘
+  0   32   64   96  128  160  192  224  256  288  320  352  384
+```
+
+**När frameIndex = 2, vi vill rita frame #2:**
+
+```
+Source (från sprite sheet):
+┌────────────────────────────────────────────────────────────┐
+│                    ┏━━━━━━━┓                                │
+│                    ┃Frame 2┃  ← Vi klipper ut denna del    │
+│                    ┗━━━━━━━┛                                │
+└────────────────────────────────────────────────────────────┘
+Position: x = 64 (2 * 32)
+Size: 32x32
+
+Destination (på canvas):
+┌─────────────────┐
+│   ┏━━━━━━━━━━━┓ │
+│   ┃  Frame 2  ┃ │ ← Skalas till spelarens storlek (50x50)
+│   ┃ (scaled)  ┃ │
+│   ┗━━━━━━━━━━━┛ │
+└─────────────────┘
+Position: screenX, screenY
+Size: this.width x this.height (50x50)
+```
+
+### 9-parameter drawImage
+
+Funktionen `ctx.drawImage()` har flera overloads (varianter). För att rita en hel bild använder vi 3 eller 5 parametrar, men för att rita ut en specifik del av en bild använder vi `ctx.drawImage()` med 9 parametrar. När vi använder `ctx.drawImage()` på detta sätt kan vi specificera exakt vilken del av källbilden vi vill rita och var på canvas vi vill rita den.
 
 ```javascript
 ctx.drawImage(
@@ -252,14 +292,15 @@ ctx.drawImage(
     sourceY,            // Y-position i source (vilken rad)
     sourceWidth,        // Bredd att klippa ut
     sourceHeight,       // Höjd att klippa ut
-    destX,              // X-position att rita på canvas
-    destY,              // Y-position att rita på canvas
-    destWidth,          // Bredd att rita (kan skala)
-    destHeight          // Höjd att rita (kan skala)
+    destinationX,              // X-position att rita på canvas
+    destinationY,              // Y-position att rita på canvas
+    destinationWidth,          // Bredd att rita (kan skala)
+    destinationHeight          // Höjd att rita (kan skala)
 )
 ```
 
-**För att rita frame 3 av run-animation:**
+För att rita frame 3 från vår run-sprite så använder vi:
+
 ```javascript
 const frameWidth = 384 / 12  // = 32px per frame
 const frameIndex = 3
@@ -277,6 +318,27 @@ ctx.drawImage(
 )
 ```
 
+### frameRow och fler rader
+
+Om vi hade en sprite sheet med flera rader (t.ex. olika animationer på olika rader) så skulle vi behöva en `frameRow` parameter för att veta vilken rad vi ska rita ifrån.
+
+```javascript
+const frameRow = 1  // Andra raden (0-indexed)
+ctx.drawImage(
+    spriteSheet,
+    frameIndex * frameWidth,
+    frameRow * frameHeight,  // Använd frameRow för Y-position
+    frameWidth,
+    frameHeight,
+    screenX,
+    screenY,
+    this.width,
+    this.height
+)
+```
+
+I det systemet så behöver vi byta `frameRow` när vi byter animation (t.ex. idle på rad 0, run på rad 1) till skillnad från vårt nuvarande system där varje animation är en separat bild.
+
 ## Animation Timing
 
 Med `frameInterval` kan vi kontrollera hur snabbt animationen spelar:
@@ -291,15 +353,11 @@ if (this.frameTimer >= interval) {
 }
 ```
 
-**Exempel:**
-- `frameInterval = 80ms`
-- Om game loop kör på 60fps ≈ 16ms per frame
-- Behöver ~5 game frames innan vi byter sprite frame
-- 12 sprite frames * 80ms = 960ms för hela run-animationen
-
 ## Horizontal Flip med Canvas Transform
 
-För att spegelvända sprites använder vi canvas transforms:
+När en spelare byter håll så vill vi att sprite ska vända sig åt rätt håll. Det är något som skulle kunna göras med att ha separata sprites för vänster och höger. Det är dock mer effektivt att använda canvas transform för att spegelvända bilden horisontellt.
+
+När vi gör en transform på canvas så påverkar det ALLT vi ritar efteråt, så vi måste spara och återställa context state med `ctx.save()` och `ctx.restore()` för att inte påverka andra ritningar.
 
 ```javascript
 ctx.save()  // Spara context state
@@ -316,14 +374,11 @@ ctx.drawImage(image, ..., 0, 0, width, height)
 ctx.restore()  // Återställ context state
 ```
 
-**Varför translate först?**
-- `scale(-1, 1)` spegelvänder runt origin (0, 0)
-- Utan translate skulle sprite rita utanför skärmen
-- Vi flyttar origin så sprite hamnar rätt efter flip
+Med denna metod kan vi enkelt rita sprites åt båda hållen utan att behöva separata bilder.
 
 ## Error Handling
 
-`loadSprite()` inkluderar error handling:
+När vi laddar in bilderna i spelet är det viktigt att hantera fel om bilden inte kan laddas (t.ex. felaktig path, felstavning och så vidare). I `loadSprite()` metoden lägger vi till en `onerror` handler
 
 ```javascript
 img.onerror = () => {
@@ -331,16 +386,12 @@ img.onerror = () => {
 }
 ```
 
-**Vanliga fel:**
-- Felstavad path
-- Bild finns inte i assets-mappen
-- Felaktigt filformat
-
-**Testa error handling:** Ändra en import path till något som inte finns och kolla console.
+Du kan testa fel-hanteringen genom att ändra en import path till något som inte finns och kolla console.
 
 ## Animation Completion Callback
 
-GameObject har stöd för `onAnimationComplete` callback:
+Ibland så kan vi vilja spela upp en animation EN gång och sedan göra något när den är klar, t.ex. en dödsanimation. För detta kan vi använda `onAnimationComplete` callbacken som anropas när en animation loopar.
+Funktionen låter oss definiera vad som ska hända när en animation är klar.
 
 ```javascript
 // I en subclass constructor eller init
@@ -365,7 +416,6 @@ Kör spelet och se sprites i action:
 3. **Jump** - Statisk hoppruta
 4. **Fall** - Statisk fallruta
 5. **Flip** - Sprites vänder sig åt rätt håll
-6. **Enemies** - Fiender animerar när de patrullerar (efter din uppgift)
 
 ## Uppgifter
 
@@ -400,7 +450,6 @@ Som första steg så ska du nu implementera sprites för `Enemy`-klassen med sam
 - Testa att fienden flippar när den vänder
 - Kontrollera console för fel om sprites inte laddas
 
-
 ## Ta skada
 
 När spelaren tar skada så har vi tidigare bara blinkat rektangeln. Men nu har vi tillgång till sprites!
@@ -433,5 +482,15 @@ this.onAnimationComplete = (animationName) => {
 ```
 
 ## Testfrågor
+
+1. Förklara vad en sprite sheet är och varför vi använder dem istället för separata bildfiler för varje frame.
+2. Om en sprite sheet är 480x32 pixels och varje frame är 32x32 pixels, hur många frames innehåller sprite sheet:en?
+3. Vad gör modulo-operatorn (%) i uttrycket `frameIndex = (frameIndex + 1) % frames`? Förklara med ett exempel där frames = 4.
+4. Varför behöver vi `frameTimer` och `frameInterval` i animationssystemet? Vad skulle hända om vi bara ökade `frameIndex` varje frame utan dessa?
+5. Förklara de 9 parametrarna i `ctx.drawImage()` som används för sprite slicing. Vilka 4 parametrar bestämmer "källan" och vilka 4 bestämmer "destinationen"?
+6. I `setAnimation()` metoden nollställer vi `frameIndex = 0`. Varför är detta viktigt? Ge ett exempel på vad som kan gå fel om vi inte gör detta.
+7. Hur fungerar horizontal flip med canvas transforms? Förklara varför vi behöver både `translate()` och `scale(-1, 1)`.
+8. Varför lägger vi animations-logiken i `GameObject` istället för att kopiera den till varje subklass (Player, Enemy, Coin)?
+9. Förklara animation state priority i Player.update(). I vilken ordning kollar vi states (jump, fall, run, idle) och varför just den ordningen?
 
 ## Nästa steg
