@@ -1,15 +1,17 @@
 import './style.css'
 import Game from './Game.js'
+import SpaceShooterGame from './SpaceShooterGame.js'
 
 const setupGame = (canvas) => {
-    // Sätt storlek på canvas 854x480 (16:9)
-    canvas.width = 854
-    canvas.height = 480
+    // Sätt storlek på canvas 480x854 (9:16) för space shooter
+    canvas.width = 480
+    canvas.height = 854
     // ctx är "ritkontexten", används för att rita på canvas
     const ctx = canvas.getContext('2d')
 
-    // Skapa spelet
-    const game = new Game(canvas.width, canvas.height)
+    // Skapa spelet - välj mellan platform game eller space shooter
+    // const game = new Game(canvas.width, canvas.height) // Platform game
+    const game = new SpaceShooterGame(canvas.width, canvas.height) // Space shooter
     let lastTime = 0
     // Game loop variabel så att vi kan stoppa den senare om vi vill
     let gameLoop

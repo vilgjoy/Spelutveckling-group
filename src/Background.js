@@ -18,10 +18,15 @@ export default class Background {
         this.tiled = options.tiled !== undefined ? options.tiled : true
         this.tileWidth = options.tileWidth || 64
         this.tileHeight = options.tileHeight || 64
+        this.tileX = options.tileX !== undefined ? options.tileX : true // Tila på X-axeln?
         this.tileY = options.tileY !== undefined ? options.tileY : true // Tila på Y-axeln?
         this.scrollSpeed = options.scrollSpeed !== undefined ? options.scrollSpeed : 1.0
         this.yPosition = options.yPosition !== undefined ? options.yPosition : 0 // Vertikal position (0 = top)
         this.height = options.height || null // Höjd att rita (null = full height)
+        
+        // Auto-scroll velocity (för space shooter etc)
+        this.autoScrollX = options.autoScrollX || 0 // Pixels per millisekund
+        this.autoScrollY = options.autoScrollY || 0 // Pixels per millisekund
         
         // För parallax - spara offset
         this.offsetX = 0
@@ -29,21 +34,32 @@ export default class Background {
     }
     
     update(deltaTime) {
-        // Inget att uppdatera just nu, men bra att ha för framtida animationer
+        // Auto-scroll (för space shooter etc)
+        this.offsetX += this.autoScrollX * deltaTime
+        this.offsetY += this.autoScrollY * deltaTime
     }
     
     draw(ctx, camera) {
         if (!this.imageLoaded) return
         
         // Beräkna parallax offset baserat på kamera och scroll speed
-        this.offsetX = camera.x * this.scrollSpeed
-        this.offsetY = camera.y * this.scrollSpeed
+        // Plus auto-scroll offset
+        const cameraOffsetX = camera.x * this.scrollSpeed
+        const cameraOffsetY = camera.y * this.scrollSpeed
+        
+        // Kombinera camera parallax med auto-scroll
+        this.offsetX += cameraOffsetX
+        this.offsetY += cameraOffsetY
         
         if (this.tiled) {
             this.drawTiled(ctx, camera)
         } else {
             this.drawStretched(ctx, camera)
         }
+        
+        // Reset camera offsets (auto-scroll persists in update)
+        this.offsetX -= cameraOffsetX
+        this.offsetY -= cameraOffsetY
     }
     
     drawTiled(ctx, camera) {
@@ -51,30 +67,39 @@ export default class Background {
         const drawHeight = this.height !== null ? this.height : camera.height
         const drawY = this.yPosition
         
-        // Beräkna vilka tiles som är synliga (baserat på parallax offset)
-        const startCol = Math.floor(this.offsetX / this.tileWidth)
-        const endCol = Math.ceil((this.offsetX + camera.width) / this.tileWidth)
+        // Wrap offsets to tile dimensions för seamless looping
+        const wrappedOffsetX = ((this.offsetX % this.tileWidth) + this.tileWidth) % this.tileWidth
+        const wrappedOffsetY = ((this.offsetY % this.tileHeight) + this.tileHeight) % this.tileHeight
         
-        let startRow, endRow
-        if (this.tileY) {
-            startRow = Math.floor((this.offsetY + drawY) / this.tileHeight)
-            endRow = Math.ceil((this.offsetY + drawY + drawHeight) / this.tileHeight)
-        } else {
-            // Rita bara en rad, positionerad vid drawY
-            startRow = 0
-            endRow = 0
-        }
+        // Beräkna hur många tiles som behövs
+        const numCols = this.tileX ? Math.ceil(camera.width / this.tileWidth) + 1 : 1
+        const numRows = this.tileY ? Math.ceil(camera.height / this.tileHeight) + 1 : 1
         
-        // Rita alla synliga tiles
-        for (let row = startRow; row <= endRow; row++) {
-            for (let col = startCol; col <= endCol; col++) {
-                const x = col * this.tileWidth - this.offsetX
-                const y = this.tileY ? (row * this.tileHeight - this.offsetY) : drawY
-                
-                // Skippa tiles som är utanför vårt vertikala område
-                if (y + this.tileHeight < drawY || y > drawY + drawHeight) continue
-                
-                ctx.drawImage(this.image, x, y, this.tileWidth, this.tileHeight)
+        // Rita alla tiles
+        for (let row = 0; row < numRows; row++) {
+            for (let col = 0; col < numCols; col++) {
+                if (this.tileX && this.tileY) {
+                    // Normalt tiling (både X och Y)
+                    const x = col * this.tileWidth - wrappedOffsetX
+                    const y = row * this.tileHeight - wrappedOffsetY + drawY
+                    ctx.drawImage(this.image, x, y, this.tileWidth, this.tileHeight)
+                } else if (!this.tileX && this.tileY) {
+                    // Stretch X, tile Y (för space backgrounds)
+                    // Behåll aspect ratio - använd original tileHeight
+                    const x = 0
+                    const y = row * this.tileHeight - wrappedOffsetY + drawY
+                    const width = camera.width
+                    ctx.drawImage(this.image, x, y, width, this.tileHeight)
+                } else if (this.tileX && !this.tileY) {
+                    // Tile X, stretch Y (för horisontella lager)
+                    const x = col * this.tileWidth - wrappedOffsetX
+                    const y = drawY
+                    const height = drawHeight
+                    ctx.drawImage(this.image, x, y, this.tileWidth, height)
+                } else {
+                    // Ingen tiling, bara stretch
+                    ctx.drawImage(this.image, 0, drawY, camera.width, drawHeight)
+                }
             }
         }
     }
