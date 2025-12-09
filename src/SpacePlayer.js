@@ -1,10 +1,36 @@
 import GameObject from './GameObject.js'
 import SpaceProjectile from './SpaceProjectile.js'
 import playerShip from './assets/Shootem Up/SpaceShips_Player-0001.png'
+import barrierImage from './assets/Shootem Up/Barrier-0001.png'
 
 export default class SpacePlayer extends GameObject {
     constructor(game, x, y, width, height) {
         super(game, x, y, width, height)
+        
+        // Load spaceship sprite
+        this.image = new Image()
+        this.image.src = playerShip
+        this.imageLoaded = false
+        
+        this.image.onload = () => {
+            this.imageLoaded = true
+        }
+        
+        // Load barrier sprite for shield
+        this.barrierImage = new Image()
+        this.barrierImage.src = barrierImage
+        this.barrierImageLoaded = false
+        
+        this.barrierImage.onload = () => {
+            this.barrierImageLoaded = true
+        }
+        
+        // Barrier sprite info (176x176, 2 rows x 2 columns)
+        // We want row 0, column 1 (second item)
+        this.barrierSpriteWidth = 176 / 2 // 88px per barrier
+        this.barrierSpriteHeight = 176 / 2 // 88px per row
+        this.barrierSpriteX = this.barrierSpriteWidth // Column 1
+        this.barrierSpriteY = 0 // Row 0
         
         // Load spaceship sprite
         this.image = new Image()
@@ -32,6 +58,10 @@ export default class SpacePlayer extends GameObject {
         this.invulnerable = false
         this.invulnerableTimer = 0
         this.invulnerableDuration = 1000 // 1 second
+        
+        // Shield system (from powerup)
+        this.shield = false
+        this.shieldDuration = 0
         
         // Shooting system
         this.canShoot = true
@@ -80,6 +110,15 @@ export default class SpacePlayer extends GameObject {
             }
         }
         
+        // Update shield timer
+        if (this.shield) {
+            this.shieldDuration -= deltaTime
+            if (this.shieldDuration <= 0) {
+                this.shield = false
+                this.shieldDuration = 0
+            }
+        }
+        
         // Update shoot cooldown
         if (!this.canShoot) {
             this.shootCooldownTimer += deltaTime
@@ -113,6 +152,13 @@ export default class SpacePlayer extends GameObject {
     }
     
     takeDamage(amount) {
+        // Shield blocks damage
+        if (this.shield) {
+            this.shield = false
+            this.shieldDuration = 0
+            return
+        }
+        
         if (this.invulnerable) return
         
         this.health -= amount
@@ -147,6 +193,19 @@ export default class SpacePlayer extends GameObject {
             this.x, this.y, // Destination position
             this.width, this.height // Destination size
         )
+        
+        // Draw barrier sprite on top of player when shield is active
+        if (this.shield && this.barrierImageLoaded) {
+            const barrierSize = this.width * 1.8 // Make barrier larger than player
+            ctx.drawImage(
+                this.barrierImage,
+                this.barrierSpriteX, this.barrierSpriteY,
+                this.barrierSpriteWidth, this.barrierSpriteHeight,
+                this.x + this.width / 2 - barrierSize / 2,
+                this.y + this.height / 2 - barrierSize / 2,
+                barrierSize, barrierSize
+            )
+        }
         
         // Debug hitbox
         if (this.game.debug) {

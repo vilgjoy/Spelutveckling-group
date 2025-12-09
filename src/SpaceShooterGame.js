@@ -1,31 +1,32 @@
-import Game from './Game.js'
+import GameBase from './GameBase.js'
 import Background from './Background.js'
 import SpacePlayer from './SpacePlayer.js'
+import SpaceEnemy from './SpaceEnemy.js'
+import PowerUp from './PowerUp.js'
 import spaceLayer from './assets/Shootem Up/Background_Space-0001.png'
 import nebulaLayer from './assets/Shootem Up/Background_Nebula-0001.png'
 import starsLayer from './assets/Shootem Up/Background_Stars-0001.png'
 import smallStarsLayer from './assets/Shootem Up/Background_SmallStars-0001.png'
 
-export default class SpaceShooterGame extends Game {
+export default class SpaceShooterGame extends GameBase {
     constructor(width, height) {
         super(width, height)
-        
-        // Disable physics for space shooter
-        this.gravity = 0
-        this.friction = 0
         
         // Space shooter world (scrolls vertically, full width)
         this.worldWidth = width
         this.worldHeight = height * 10 // Mycket längre vertikal värld
         
-        // Override backgrounds with space layers
+        // Setup space backgrounds with parallax
         this.setupSpaceBackgrounds()
         
-        // No background objects for now (clouds etc)
-        this.backgroundObjects = []
+        // Enemy spawning system
+        this.enemySpawnTimer = 0
+        this.enemySpawnInterval = 1500 // Spawn var 1.5 sekund
+        this.minSpawnInterval = 500 // Minsta spawn intervall
+        this.spawnIntervalDecrease = 50 // Minska intervall över tid
         
-        // Initialize space shooter mode
-        this.initSpaceShooter()
+        // Initialize game
+        this.init()
     }
     
     setupSpaceBackgrounds() {
@@ -76,7 +77,7 @@ export default class SpaceShooterGame extends Game {
         ]
     }
     
-    initSpaceShooter() {
+    init() {
         // Reset score
         this.score = 0
         
@@ -89,33 +90,58 @@ export default class SpaceShooterGame extends Game {
             50
         )
         
-        // Space shooter has no platforms
-        this.platforms = []
-        
-        // Space shooter has no coins (use powerups later)
-        this.coins = []
-        this.coinsCollected = 0
-        this.totalCoins = 0
-        
-        // No enemies yet
+        // Reset enemies and projectiles
         this.enemies = []
-        
-        // No projectiles yet
         this.projectiles = []
+        this.powerups = []
+        
+        // Reset enemy spawning
+        this.enemySpawnTimer = 0
+        this.enemySpawnInterval = 1500
         
         // Camera setup for vertical scrolling space shooter
-        this.camera.x = 0 // No horizontal movement
+        this.camera.x = 0
         this.camera.y = 0
         this.camera.setWorldBounds(this.worldWidth, this.worldHeight)
     }
     
     restart() {
         this.gameState = 'PLAYING'
-        this.initSpaceShooter()
+        this.init()
+    }
+    
+    spawnEnemy() {
+        // Random X position across screen width
+        const x = Math.random() * (this.width - 50)
+        const y = -60 // Spawn ovanför skärmen
+        
+        // Random enemy type (0-11: 3 rader x 4 kolumner)
+        const enemyType = Math.floor(Math.random() * 12)
+        
+        const enemy = new SpaceEnemy(this, x, y, 50, 50, enemyType)
+        this.enemies.push(enemy)
+    }
+    
+    tryDropPowerup(enemy) {
+        // Check if enemy drops a powerup based on dropChance
+        if (Math.random() < enemy.dropChance) {
+            // 50/50 chance between health and shield
+            const powerupType = Math.random() < 0.5 ? 'health' : 'shield'
+            const powerup = new PowerUp(
+                this,
+                enemy.x + enemy.width / 2 - 15, // Center on enemy
+                enemy.y,
+                powerupType
+            )
+            this.powerups.push(powerup)
+        }
     }
     
     update(deltaTime) {
-        // Call parent update
+        // Uppdatera backgrounds
+        this.backgrounds.forEach(bg => bg.update(deltaTime))
+        
+        // Call parent update for common game logic
         super.update(deltaTime)
         
         // Force camera to stay fixed for space shooter
@@ -123,13 +149,27 @@ export default class SpaceShooterGame extends Game {
         this.camera.x = 0
         this.camera.y = 0
         
-        // Override win condition - space shooter doesn't use coins
-        // Win condition will be based on waves/score/time instead
-        if (this.gameState === 'WIN') {
-            // Prevent coin-based win from triggering
-            if (this.totalCoins === 0) {
-                this.gameState = 'PLAYING'
+        // Enemy spawning system (only when playing)
+        if (this.gameState === 'PLAYING') {
+            this.enemySpawnTimer += deltaTime
+            
+            if (this.enemySpawnTimer >= this.enemySpawnInterval) {
+                this.spawnEnemy()
+                this.enemySpawnTimer = 0
+                
+                // Gradually increase difficulty by reducing spawn interval
+                if (this.enemySpawnInterval > this.minSpawnInterval) {
+                    this.enemySpawnInterval -= this.spawnIntervalDecrease
+                }
             }
         }
+    }
+    
+    draw(ctx) {
+        // Rita backgrounds först (längst bak)
+        this.backgrounds.forEach(bg => bg.draw(ctx, this.camera))
+        
+        // Call parent draw for common rendering
+        super.draw(ctx)
     }
 }

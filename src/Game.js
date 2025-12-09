@@ -1,4 +1,5 @@
 import Player from './Player.js'
+import SpacePlayer from './SpacePlayer.js'
 import InputHandler from './InputHandler.js'
 import Platform from './Platform.js'
 import Coin from './Coin.js'
@@ -32,6 +33,7 @@ export default class Game {
 
         // Game state
         this.gameState = 'MENU' // MENU, PLAYING, GAME_OVER, WIN
+        this.gameMode = 'platform' // 'platform' or 'space' - vilken speltyp
         this.score = 0
         this.coinsCollected = 0
         this.totalCoins = 0 // Sätts när vi skapar coins
@@ -111,6 +113,19 @@ export default class Game {
         this.camera.y = 0
         this.camera.targetX = 0
         this.camera.targetY = 0
+        
+        // Initialize based on game mode
+        if (this.gameMode === 'space') {
+            this.initSpaceShooter()
+        } else {
+            this.initPlatformGame()
+        }
+    }
+    
+    initPlatformGame() {
+        this.player = new Player(this, 50, 50, 50, 50, 'green')
+
+        // Skapa plattformar för nivån (utspridda över hela worldWidth)    initPlatformGame() {
 
         this.player = new Player(this, 50, 50, 50, 50, 'green')
 
@@ -170,6 +185,62 @@ export default class Game {
         // Projektiler
         this.projectiles = []
 
+        // Skapa andra objekt i spelet (valfritt)
+        this.gameObjects = []
+    }
+    
+    initSpaceShooter() {
+        // Create space player (centered horizontally, near bottom)
+        this.player = new SpacePlayer(
+            this,
+            this.width / 2 - 25, // Centered
+            this.height - 100,    // Near bottom
+            50,
+            50
+        )
+        
+        // Space shooter has no platforms
+        this.platforms = []
+        
+        // Space shooter has no coins (use powerups later)
+        this.coins = []
+        this.coinsCollected = 0
+        this.totalCoins = 0
+        
+        // No enemies yet (spawned dynamically)
+        this.enemies = []
+        
+        // Projektiler
+        this.projectiles = []
+
+        // Skapa andra objekt i spelet (valfritt)
+        this.gameObjects = []
+    }
+    
+    initSpaceShooter() {
+        // Create space player (centered horizontally, near bottom)
+        this.player = new SpacePlayer(
+            this,
+            this.width / 2 - 25, // Centered
+            this.height - 100,    // Near bottom
+            50,
+            50
+        )
+        
+        // Space shooter has no platforms
+        this.platforms = []
+        
+        // Space shooter has no coins (use powerups later)
+        this.coins = []
+        this.coinsCollected = 0
+        this.totalCoins = 0
+        
+        // No enemies yet (spawned dynamically)
+        this.enemies = []
+        
+        // Projektiler
+        this.projectiles = []
+        
         // Skapa andra objekt i spelet (valfritt)
         this.gameObjects = []
     }
@@ -285,9 +356,12 @@ export default class Game {
             // Kolla kollision med fiender
             this.enemies.forEach(enemy => {
                 if (projectile.intersects(enemy) && !enemy.markedForDeletion) {
-                    enemy.markedForDeletion = true
+                    enemy.takeDamage(1)
                     projectile.markedForDeletion = true
-                    this.score += 50 // Bonuspoäng för att döda fiende
+                    // Add points if enemy dies (check in SpaceEnemy)
+                    if (enemy.markedForDeletion && enemy.points) {
+                        this.score += enemy.points
+                    }
                 }
             })
             

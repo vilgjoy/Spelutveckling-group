@@ -9,9 +9,22 @@ export default class MainMenu extends Menu {
     getOptions() {
         return [
             {
-                text: 'Start Game',
-                key: ' ',
+                text: 'Platform Game',
+                key: 'p',
                 action: () => {
+                    this.game.gameMode = 'platform'
+                    this.game.init()
+                    this.game.gameState = 'PLAYING'
+                    this.game.currentMenu = null
+                    this.game.inputHandler.keys.clear()
+                }
+            },
+            {
+                text: 'Space Shooter',
+                key: 's',
+                action: () => {
+                    this.game.gameMode = 'space'
+                    this.game.init()
                     this.game.gameState = 'PLAYING'
                     this.game.currentMenu = null
                     this.game.inputHandler.keys.clear()
