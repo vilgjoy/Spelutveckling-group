@@ -243,7 +243,7 @@ export default class SpacePlayer extends GameObject {
         // Debug hitbox
         if (this.game.debug) {
             ctx.strokeStyle = 'yellow'
-            ctx.lineWidth = 2
+            ctx.lineWidth = 1
             ctx.strokeRect(this.x, this.y, this.width, this.height)
         }
     }

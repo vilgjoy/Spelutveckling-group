@@ -142,7 +142,7 @@ export default class BossEnemy extends SpaceEnemy {
         // Debug hitbox
         if (this.game.debug) {
             ctx.strokeStyle = 'purple'
-            ctx.lineWidth = 3
+            ctx.lineWidth = 1
             ctx.strokeRect(this.x, this.y, this.width, this.height)
         }
     }
