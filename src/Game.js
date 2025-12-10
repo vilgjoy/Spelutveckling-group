@@ -9,15 +9,6 @@ export default class Game {
         this.width = width;
         this.height = height;
         this.inputHandler = new InputHandler(this);
-        // Ladda bilden
-        this.image = new Image();
-        this.image.src = "/dvd.png";
-        this.image.onload = () => {
-            console.log("Image loaded successfully");
-        };
-        this.image.onerror = (e) => {
-            console.error("Image failed to load", e);
-        };
         // Skapa alla objekt i spelet
         this.gameObjects = [
             new Rectangle(this, 50, 50, 100, 100, 'red'),
