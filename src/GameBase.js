@@ -111,6 +111,15 @@ export default class GameBase {
                 }
             })
             
+            // Check collision with boss projectiles
+            this.projectiles.forEach(projectile => {
+                // Only check boss projectiles (they have damage property and harm player)
+                if (projectile.damage && this.player.intersects(projectile) && !projectile.markedForDeletion) {
+                    this.player.takeDamage(projectile.damage)
+                    projectile.markedForDeletion = true
+                }
+            })
+            
             // Kontrollera kollision med powerups
             this.powerups.forEach(powerup => {
                 if (this.player.intersects(powerup) && !powerup.markedForDeletion) {

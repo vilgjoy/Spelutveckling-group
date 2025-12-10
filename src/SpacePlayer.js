@@ -67,6 +67,15 @@ export default class SpacePlayer extends GameObject {
         this.canShoot = true
         this.shootCooldown = 200 // Faster shooting in space
         this.shootCooldownTimer = 0
+        
+        // Heat system
+        this.maxHeat = 100
+        this.heat = 0
+        this.heatPerShot = 8 // Heat generated per shot
+        this.heatCooldownRate = 0.02 // Heat reduction per millisecond
+        this.overheated = false
+        this.overheatCooldownTime = 3000 // 3 seconds lockout when overheated
+        this.overheatTimer = 0
     }
     
     update(deltaTime) {
@@ -128,8 +137,24 @@ export default class SpacePlayer extends GameObject {
             }
         }
         
-        // Shooting
-        if (this.game.inputHandler.keys.has(' ') && this.canShoot) {
+        // Handle overheat cooldown
+        if (this.overheated) {
+            this.overheatTimer += deltaTime
+            if (this.overheatTimer >= this.overheatCooldownTime) {
+                this.overheated = false
+                this.overheatTimer = 0
+                this.heat = 0 // Reset heat to 0 after cooldown
+            }
+        } else {
+            // Cool down heat over time (only when not overheated)
+            if (this.heat > 0) {
+                this.heat -= this.heatCooldownRate * deltaTime
+                if (this.heat < 0) this.heat = 0
+            }
+        }
+        
+        // Shooting - can't shoot when overheated
+        if (this.game.inputHandler.keys.has(' ') && this.canShoot && !this.overheated) {
             this.shoot()
         }
     }
@@ -149,6 +174,14 @@ export default class SpacePlayer extends GameObject {
         
         this.canShoot = false
         this.shootCooldownTimer = 0
+        
+        // Add heat
+        this.heat += this.heatPerShot
+        if (this.heat >= this.maxHeat) {
+            this.heat = this.maxHeat
+            this.overheated = true // Trigger overheat lockout
+            this.overheatTimer = 0
+        }
     }
     
     takeDamage(amount) {

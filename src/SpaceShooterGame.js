@@ -1,12 +1,13 @@
 import GameBase from './GameBase.js'
 import Background from './Background.js'
 import SpacePlayer from './SpacePlayer.js'
-import SpaceEnemy from './SpaceEnemy.js'
+import EnemySpawner from './EnemySpawner.js'
 import PowerUp from './PowerUp.js'
 import spaceLayer from './assets/Shootem Up/Background_Space-0001.png'
 import nebulaLayer from './assets/Shootem Up/Background_Nebula-0001.png'
 import starsLayer from './assets/Shootem Up/Background_Stars-0001.png'
 import smallStarsLayer from './assets/Shootem Up/Background_SmallStars-0001.png'
+import stormMusic from './assets/sounds/Storm.mp3'
 
 export default class SpaceShooterGame extends GameBase {
     constructor(width, height) {
@@ -20,10 +21,12 @@ export default class SpaceShooterGame extends GameBase {
         this.setupSpaceBackgrounds()
         
         // Enemy spawning system
-        this.enemySpawnTimer = 0
-        this.enemySpawnInterval = 1500 // Spawn var 1.5 sekund
-        this.minSpawnInterval = 500 // Minsta spawn intervall
-        this.spawnIntervalDecrease = 50 // Minska intervall över tid
+        this.enemySpawner = new EnemySpawner(this)
+        
+        // Background music
+        this.backgroundMusic = new Audio(stormMusic)
+        this.backgroundMusic.loop = true
+        this.backgroundMusic.volume = 0.3 // 30% volume
         
         // Initialize game
         this.init()
@@ -97,30 +100,24 @@ export default class SpaceShooterGame extends GameBase {
         this.powerups = []
         
         // Reset enemy spawning
-        this.enemySpawnTimer = 0
-        this.enemySpawnInterval = 1500
+        this.enemySpawner.reset()
         
         // Camera setup for vertical scrolling space shooter
         this.camera.x = 0
         this.camera.y = 0
         this.camera.setWorldBounds(this.worldWidth, this.worldHeight)
+        
+        // Start background music
+        this.backgroundMusic.currentTime = 0
+        this.backgroundMusic.play().catch(err => {
+            // Browser may block autoplay - music will start on first user interaction
+            console.log('Background music autoplay prevented:', err)
+        })
     }
     
     restart() {
         this.gameState = 'PLAYING'
         this.init()
-    }
-    
-    spawnEnemy() {
-        // Random X position across screen width
-        const x = Math.random() * (this.width - 50)
-        const y = -60 // Spawn ovanför skärmen
-        
-        // Random enemy type (0-11: 3 rader x 4 kolumner)
-        const enemyType = Math.floor(Math.random() * 12)
-        
-        const enemy = new SpaceEnemy(this, x, y, 50, 50, enemyType)
-        this.enemies.push(enemy)
     }
     
     tryDropPowerup(enemy) {
@@ -150,20 +147,8 @@ export default class SpaceShooterGame extends GameBase {
         this.camera.x = 0
         this.camera.y = 0
         
-        // Enemy spawning system (only when playing)
-        if (this.gameState === 'PLAYING') {
-            this.enemySpawnTimer += deltaTime
-            
-            if (this.enemySpawnTimer >= this.enemySpawnInterval) {
-                this.spawnEnemy()
-                this.enemySpawnTimer = 0
-                
-                // Gradually increase difficulty by reducing spawn interval
-                if (this.enemySpawnInterval > this.minSpawnInterval) {
-                    this.enemySpawnInterval -= this.spawnIntervalDecrease
-                }
-            }
-        }
+        // Enemy spawning handled by spawner
+        this.enemySpawner.update(deltaTime)
     }
     
     draw(ctx) {

@@ -56,7 +56,13 @@ export default class PowerUp extends GameObject {
     apply(player) {
         // Apply powerup effect to player
         if (this.type === 'health') {
+            const wasAtFullHealth = player.health === player.maxHealth
             player.health = Math.min(player.health + 1, player.maxHealth)
+            
+            // If at full health, reduce gun heat as bonus
+            if (wasAtFullHealth) {
+                player.heat = Math.max(0, player.heat - 30)
+            }
         } else if (this.type === 'shield') {
             player.shield = true
             player.shieldDuration = 5000 // 5 seconds
