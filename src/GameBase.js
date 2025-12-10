@@ -11,6 +11,7 @@ export default class GameBase {
         this.gameState = 'PLAYING' // PLAYING, GAME_OVER, WIN
         this.score = 0
         this.debug = false // Debug mode toggle
+        this.playTime = 0 // Time played in milliseconds
         
         // Common systems
         this.inputHandler = new InputHandler(this)
@@ -65,6 +66,9 @@ export default class GameBase {
         
         // Uppdatera bara om spelet är i PLAYING state
         if (this.gameState !== 'PLAYING') return
+        
+        // Update play time
+        this.playTime += deltaTime
         
         // Uppdatera spelaren (implementeras av subklass)
         if (this.player) {

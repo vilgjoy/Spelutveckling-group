@@ -78,8 +78,9 @@ export default class SpaceShooterGame extends GameBase {
     }
     
     init() {
-        // Reset score
+        // Reset score and time
         this.score = 0
+        this.playTime = 0
         
         // Create space player (centered horizontally, near bottom)
         this.player = new SpacePlayer(

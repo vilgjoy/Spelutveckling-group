@@ -33,15 +33,21 @@ export default class UserInterface {
         // Rita score
         ctx.fillText(`Score: ${this.game.score}`, 20, 40)
         
+        // Rita time played
+        const minutes = Math.floor(this.game.playTime / 60000)
+        const seconds = Math.floor((this.game.playTime % 60000) / 1000)
+        const timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`
+        ctx.fillText(`Time: ${timeString}`, 20, 70)
+        
         // Rita coins collected (bara för platform game)
         if (this.game.totalCoins > 0) {
-            ctx.fillText(`Coins: ${this.game.coinsCollected}`, 20, 70)
+            ctx.fillText(`Coins: ${this.game.coinsCollected}`, 20, 100)
         }
         
         ctx.restore()
         
         // Rita health bar (egen metod)
-        this.drawHealthBar(ctx, 20, 90)
+        this.drawHealthBar(ctx, 20, this.game.totalCoins > 0 ? 120 : 90)
     }
     
     drawHealthBar(ctx, x, y) {
