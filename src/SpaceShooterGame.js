@@ -86,8 +86,8 @@ export default class SpaceShooterGame extends GameBase {
             this,
             this.width / 2 - 25, // Centered
             this.height - 100,    // Near bottom
-            50,
-            50
+            64,
+            48
         )
         
         // Reset enemies and projectiles

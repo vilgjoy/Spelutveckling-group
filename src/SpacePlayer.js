@@ -42,10 +42,10 @@ export default class SpacePlayer extends GameObject {
         }
         
         // Sprite sheet info (256x256, 4 ships per rad)
-        this.spriteWidth = 64 // 256 / 4 = 64
-        this.spriteHeight = 64 // Första raden
-        this.spriteX = 0 // Första skeppet i raden
-        this.spriteY = 0 // Första raden
+        this.spriteWidth = 56 // 256 / 4 = 64
+        this.spriteHeight = 48 // Första raden
+        this.spriteX = 4 // Första skeppet i raden
+        this.spriteY = 16 // Första raden
         
         // Movement (direct velocity, no physics)
         this.velocityX = 0

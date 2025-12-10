@@ -20,10 +20,10 @@ export default class SpaceEnemy extends GameObject {
         
         // Define each enemy: startX, width, stats, and powerup drop chance
         const enemyData = [
-            { startX: 30, width: 50, health: 3, damage: 2, speed: 0.1, points: 100, dropChance: 0.4 }, // Large - 40% drop
-            { startX: 85, width: 40, health: 2, damage: 1, speed: 0.13, points: 50, dropChance: 0.25 },  // Medium - 25% drop
-            { startX: 135, width: 30, health: 2, damage: 1, speed: 0.15, points: 30, dropChance: 0.1 }, // Small - 10% drop
-            { startX: 175, width: 20, health: 1, damage: 1, speed: 0.2, points: 10, dropChance: 0.05 }   // Tiny - 5% drop
+            { startX: 30, width: 55, health: 3, damage: 2, speed: 0.1, points: 100, dropChance: 0.4 }, // Large - 40% drop
+            { startX: 90, width: 50, health: 2, damage: 1, speed: 0.13, points: 50, dropChance: 0.25 },  // Medium - 25% drop
+            { startX: 145, width: 45, health: 2, damage: 1, speed: 0.15, points: 30, dropChance: 0.1 }, // Small - 10% drop
+            { startX: 195, width: 28, health: 1, damage: 1, speed: 0.2, points: 10, dropChance: 0.05 }   // Tiny - 5% drop
         ]
         
         this.spriteHeight = spriteSheetHeight / 3 // 85.33px per row
