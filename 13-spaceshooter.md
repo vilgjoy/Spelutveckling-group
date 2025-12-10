@@ -330,3 +330,6 @@ this.backgroundMusic.play().catch(err => {
 - Wave patterns kan läggas till i spawner
 - Boss mechanics kan extenderas utan att röra base-klassen
 
+## Nästa steg
+
+Juice!
