@@ -19,11 +19,11 @@ export default class Player extends GameObject {
         this.directionY = 0
 
         // Fysik egenskaper
-        this.jumpPower = -0.6 // negativ hastighet för att hoppa uppåt
+        this.jumpPower = -0.4 // negativ hastighet för att hoppa uppåt
         this.isGrounded = false // om spelaren står på marken
         
         // Health system
-        this.maxHealth = 3
+        this.maxHealth = 1
         this.health = this.maxHealth
         this.invulnerable = false // Immun mot skada efter att ha blivit träffad
         this.invulnerableTimer = 0

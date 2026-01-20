@@ -7,6 +7,7 @@ import UserInterface from './UserInterface.js'
 import Camera from './Camera.js'
 import Projectile from './Projectile.js'
 import MainMenu from './menus/MainMenu.js'
+import Rectangle from './Rectangle.js'
 
 export default class Game {
     constructor(width, height) {
@@ -18,7 +19,7 @@ export default class Game {
         this.worldHeight = height
 
         // Fysik
-        this.gravity = 0.001 // pixels per millisekund^2
+        this.gravity = 0.002 // pixels per millisekund^2
         this.friction = 0.00015 // luftmotstånd för att bromsa fallhastighet
 
         // Game state
@@ -42,6 +43,7 @@ export default class Game {
         this.currentMenu = new MainMenu(this)
     }
     
+
     init() {
         // Återställ score (men inte game state - det hanteras av constructor/restart)
         this.score = 0
@@ -53,66 +55,45 @@ export default class Game {
         this.camera.targetX = 0
         this.camera.targetY = 0
 
-        this.player = new Player(this, 50, 50, 50, 50, 'green')
+        this.gameObjects = []
+        const box = new Rectangle(this, 300, 399, 90, 100, '#654321')
+        box.isBox = true
+        box.velocityX = 0
+        box.velocityY = 0
+        this.gameObjects.push(box)
+        
+
+    
+
+        this.player = new Player(this, 50, 240, 50, 50, 'green')
 
         // Skapa plattformar för nivån (utspridda över hela worldWidth)
         this.platforms = [
             // Marken (hela nivån)
-            new Platform(this, 0, this.height - 40, this.worldWidth, 40, '#654321'),
-            
+            new Platform(this, 0, this.height - 80, 300, 300, '#654321'),
+            new Platform(this, 390, this.height - 80, 1000, 300, '#654321'),
+
             // Plattformar (utspridda över nivån)
-            new Platform(this, 150, this.height - 140, 150, 20, '#8B4513'),
-            new Platform(this, 400, this.height - 200, 120, 20, '#8B4513'),
-            new Platform(this, 100, this.height - 280, 100, 20, '#8B4513'),
-            new Platform(this, 550, this.height - 160, 100, 20, '#8B4513'),
-            new Platform(this, 350, this.height - 320, 140, 20, '#8B4513'),
-            // Nya plattformar längre bort
-            new Platform(this, 900, this.height - 180, 140, 20, '#8B4513'),
-            new Platform(this, 1100, this.height - 240, 120, 20, '#8B4513'),
-            new Platform(this, 1300, this.height - 160, 100, 20, '#8B4513'),
-            new Platform(this, 1500, this.height - 280, 150, 20, '#8B4513'),
-            new Platform(this, 1750, this.height - 200, 120, 20, '#8B4513'),
-            new Platform(this, 1950, this.height - 320, 140, 20, '#8B4513'),
-            new Platform(this, 2150, this.height - 180, 100, 20, '#8B4513'),
+          
         ]
 
         // Skapa mynt i nivån (utspridda över hela worldWidth)
         this.coins = [
-            new Coin(this, 200, this.height - 180),
-            new Coin(this, 240, this.height - 180),
-            new Coin(this, 450, this.height - 240),
-            new Coin(this, 150, this.height - 320),
-            new Coin(this, 190, this.height - 320),
-            new Coin(this, 600, this.height - 200),
-            new Coin(this, 380, this.height - 360),
-            new Coin(this, 420, this.height - 360),
+            new Coin(this, 200, this.height - 400, 20, 20, 'gold'),
             // Nya mynt längre bort
-            new Coin(this, 950, this.height - 220),
-            new Coin(this, 1150, this.height - 280),
-            new Coin(this, 1350, this.height - 200),
-            new Coin(this, 1550, this.height - 320),
-            new Coin(this, 1800, this.height - 240),
-            new Coin(this, 2000, this.height - 360),
-            new Coin(this, 2200, this.height - 220),
+
         ]
         this.totalCoins = this.coins.length
 
         // Skapa fiender i nivån (utspridda över hela worldWidth)
         this.enemies = [
-            new Enemy(this, 200, this.height - 220, 40, 40, 80),
-            new Enemy(this, 450, this.height - 240, 40, 40),
-            new Enemy(this, 360, this.height - 440, 40, 40, 50),
-            // Nya fiender längre bort
-            new Enemy(this, 1000, this.height - 220, 40, 40, 100),
-            new Enemy(this, 1400, this.height - 200, 40, 40),
-            new Enemy(this, 1800, this.height - 240, 40, 40, 150),
+        
         ]
         
         // Projektiler
         this.projectiles = []
 
         // Skapa andra objekt i spelet (valfritt)
-        this.gameObjects = []
     }
     
     addProjectile(x, y, directionX) {
@@ -167,6 +148,26 @@ export default class Game {
         // Uppdatera spelaren
         this.player.update(deltaTime)
 
+
+        
+
+        this.gameObjects.forEach(obj => {
+            if (!obj.isBox) return
+            const threshold = 30
+            const push = 0.0008
+            const px = this.player.x + this.player.width
+            const bx = obj.x + obj.width/2
+            const dx = bx - px
+            const dist = Math.abs(dx)
+            if (dist < threshold) {
+                const dir = 1
+                obj.velocityX = (obj.velocityX || 0) + dir * push * deltaTime
+            }
+            const max = 0.8
+            obj.velocityX = Math.max(-max, Math.min(max, obj.velocityX))
+            obj.x += obj.velocityX * deltaTime
+
+        })
         // Antag att spelaren inte står på marken, tills vi hittar en kollision
         this.player.isGrounded = false
 
