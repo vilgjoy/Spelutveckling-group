@@ -59,9 +59,13 @@ export default class Game {
         const box = new Rectangle(this, 300, 399, 90, 100, '#654321')
         box.isBox = true
         box.velocityX = 0
+
+        box.stopAfter = 100
+
         box.velocityY = 0
         this.gameObjects.push(box)
         
+
 
     
 
@@ -167,6 +171,15 @@ export default class Game {
             obj.velocityX = Math.max(-max, Math.min(max, obj.velocityX))
             obj.x += obj.velocityX * deltaTime
 
+        })
+
+        this.gameObjects.forEach(obj => {
+            if (obj.isBox || obj.stopped) return
+            const eps = 0.5
+            if (Math.abs(obj.x - 500) <= eps) {
+                return
+            }
+            
         })
         // Antag att spelaren inte står på marken, tills vi hittar en kollision
         this.player.isGrounded = false
