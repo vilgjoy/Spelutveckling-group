@@ -27,14 +27,7 @@ export default class Player extends GameObject {
         this.health = this.maxHealth
         this.invulnerable = false // Immun mot skada efter att ha blivit träffad
         this.invulnerableTimer = 0
-        this.invulnerableDuration = 1000 // 1 sekund i millisekunder
-        
-        // Shooting system
-        this.canShoot = true
-        this.shootCooldown = 300 // millisekunder mellan skott
-        this.shootCooldownTimer = 0
-        this.lastDirectionX = 1 // Kom ihåg senaste riktningen för skjutning
-        
+        this.invulnerableDuration = 1000 // 1 sekund i millisekunder    
         // Sprite animation system - ladda sprites med olika hastigheter
         this.loadSprite('idle', idleSprite, 11, 150)  // Långsammare idle
         this.loadSprite('run', runSprite, 12, 80)     // Snabbare spring
@@ -116,23 +109,6 @@ export default class Player extends GameObject {
                 this.canShoot = true
             }
         }
-        
-        // Skjut med X-tangenten
-        if ((this.game.inputHandler.keys.has('x') || this.game.inputHandler.keys.has('X')) && this.canShoot) {
-            this.shoot()
-        }
-    }
-    
-    shoot() {
-        // Skjut i senaste riktningen spelaren rörde sig
-        const projectileX = this.x + this.width / 2
-        const projectileY = this.y + this.height / 2
-        
-        this.game.addProjectile(projectileX, projectileY, this.lastDirectionX)
-        
-        // Sätt cooldown
-        this.canShoot = false
-        this.shootCooldownTimer = this.shootCooldown
     }
     
     takeDamage(amount) {

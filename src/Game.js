@@ -91,7 +91,11 @@ export default class Game {
 
         // Skapa fiender i nivån (utspridda över hela worldWidth)
         this.enemies = [
-        
+            new Enemy(this, 300, this.height - 800, 40, 150),
+            new Enemy(this, 800, this.height - 3800, 40, 40, 200),
+            new Enemy(this, 300, this.height - 20, 90, 150),
+         
+
         ]
         
         // Projektiler
@@ -100,8 +104,9 @@ export default class Game {
         // Skapa andra objekt i spelet (valfritt)
     }
     
-    addProjectile(x, y, directionX) {
-        const projectile = new Projectile(this, x, y, directionX)
+    addEnemyProjectile(x, y, owner = null, directionY = 0) {
+        const directionX = owner.direction === -1 ? -1 : 0 // 0 om skjuter rakt neråt
+        const projectile = new Projectile(this, x, y, directionX, owner, directionY)
         this.projectiles.push(projectile)
     }
     
@@ -231,14 +236,20 @@ export default class Game {
         this.projectiles.forEach(projectile => {
             projectile.update(deltaTime)
             
-            // Kolla kollision med fiender
+            // Kolla kollision med fiender (endast spelaren skjuter kan skada fiender)
             this.enemies.forEach(enemy => {
-                if (projectile.intersects(enemy) && !enemy.markedForDeletion) {
-                    enemy.markedForDeletion = true
+                if (projectile.intersects(enemy) && !enemy.markedForDeletion && projectile.owner === this.player) {
+                    enemy.takeDamage(1)
                     projectile.markedForDeletion = true
                     this.score += 50 // Bonuspoäng för att döda fiende
                 }
             })
+            
+            // Kolla kollision med spelaren (endast fiender skjuter kan skada spelaren)
+            if (projectile.intersects(this.player) && projectile.owner !== this.player && !projectile.markedForDeletion) {
+                this.player.takeDamage(1)
+                projectile.markedForDeletion = true
+            }
             
             // Kolla kollision med plattformar/världen
             this.platforms.forEach(platform => {
