@@ -17,13 +17,29 @@ export default class Enemy extends GameObject {
         this.speed = 0.1
         this.direction = 1 // 1 = höger, -1 = vänster
         
-        this.damage = 1 // Hur mycket skada fienden gör
+        this.damage = 3 // Hur mycket skada fienden gör
+         // Shooting system
+        this.canShoot = true
+        this.shootCooldown = 250 // millisekunder mellan skott
+        this.shootCooldownTimer = 0
+        this.lastDirectionX = 1 // Kom ihåg senaste riktningen för skjutning
         
         // TODO: Ladda sprites här
         // Använd this.loadSprite() metoden från GameObject
         // Exempel: this.loadSprite('idle', idleSprite, frames, frameInterval)
         
         this.currentAnimation = 'run'
+    }
+
+
+    shoot() {        // Skjut i senaste riktningen fienden rörde sig
+        const projectileX = this.x + this.width / 2
+        const projectileY = this.y + this.height / 2
+        
+        this.game.addEnemyProjectile(projectileX, projectileY, this, 1)
+
+        this.canShoot = false
+        this.shootCooldownTimer = this.shootCooldown
     }
 
     update(deltaTime) {

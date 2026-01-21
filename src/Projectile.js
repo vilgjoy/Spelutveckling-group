@@ -1,21 +1,21 @@
 import GameObject from './GameObject.js'
 
 export default class Projectile extends GameObject {
-    constructor(game, x, y, directionX) {
-        super(game, x, y, 12, 6)
-        this.directionX = directionX // -1 för vänster, 1 för höger
+    constructor(game, x, y, directionX, directionY = 0, owner = null) {
+        super(game, x, y, 12, 6) 
+        this.directionY = directionY // -1 för upp, 1 för ner
         this.speed = 0.5 // pixels per millisekund
-        this.startX = x // Spara startposition
+        this.startY = y
         this.maxDistance = 800 // Max en skärm långt
-        this.color = 'orange'
+        this.color = 'green' // Grön projektil
     }
     
     update(deltaTime) {
         // Flytta projektilen
-        this.x += this.directionX * this.speed * deltaTime
+        this.y += this.directionY * this.speed * deltaTime
         
         // Kolla om projektilen har flugit för långt
-        const distanceTraveled = Math.abs(this.x - this.startX)
+        const distanceTraveled = Math.hypot(this.x - this.startX, this.y - this.startY)
         if (distanceTraveled > this.maxDistance) {
             this.markedForDeletion = true
         }

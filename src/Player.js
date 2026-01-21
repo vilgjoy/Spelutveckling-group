@@ -29,12 +29,7 @@ export default class Player extends GameObject {
         this.invulnerableTimer = 0
         this.invulnerableDuration = 1000 // 1 sekund i millisekunder
         
-        // Shooting system
-        this.canShoot = true
-        this.shootCooldown = 300 // millisekunder mellan skott
-        this.shootCooldownTimer = 0
-        this.lastDirectionX = 1 // Kom ihåg senaste riktningen för skjutning
-        
+    
         // Sprite animation system - ladda sprites med olika hastigheter
         this.loadSprite('idle', idleSprite, 11, 150)  // Långsammare idle
         this.loadSprite('run', runSprite, 12, 80)     // Snabbare spring
