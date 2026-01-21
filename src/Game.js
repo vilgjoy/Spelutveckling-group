@@ -9,6 +9,7 @@ import Projectile from './Projectile.js'
 import MainMenu from './menus/MainMenu.js'
 import Rectangle from './Rectangle.js'
 import Spikes from './spike.js'
+import Dart from './Dart-Shooter.js'
 
 export default class Game {
     constructor(width, height) {
@@ -101,19 +102,10 @@ export default class Game {
 
         // Skapa fiender i nivån (utspridda över hela worldWidth)
         this.enemies = [
-            new Enemy(this, 300, this.height - 20, 90, 50, 'red', 100, 1),
-            new Enemy(this, 490, this.height - 20, 90, 50, 'red', 150, 1),
+            new Enemy(this, 400, this.height - 300, 40, 40, 150),
+        
         ]
         
-        this.Spikes = [
-            new Spikes(this, 700, 389, 35, 10),
-            new Spikes(this, 850, 389, 35, 10),
-        ]
-
-
-
-
-
         // Projektiler
         this.projectiles = []
 
@@ -122,6 +114,12 @@ export default class Game {
     
     addProjectile(x, y, directionX) {
         const projectile = new Projectile(this, x, y, directionX)
+        this.projectiles.push(projectile)
+    }
+    
+    addEnemyProjectile(x, y, owner = null, directionY = 0) {
+        const directionX = owner.direction === -1 ? -1 : 0 // 0 om skjuter rakt neråt
+        const projectile = new Projectile(this, x, y, directionX, owner, directionY)
         this.projectiles.push(projectile)
     }
     
@@ -169,9 +167,7 @@ export default class Game {
         
         // Uppdatera fiender
         this.enemies.forEach(enemy => enemy.update(deltaTime))
-
-        this.Spikes.forEach(spike => spike.update(deltaTime))
-
+        
         // Uppdatera spelaren
         this.player.update(deltaTime)
 
@@ -232,18 +228,7 @@ export default class Game {
             // Vänd vid world bounds istället för screen bounds
             enemy.handleScreenBounds(this.worldWidth)
         })
-
-        this.Spikes.forEach(spike => {
-            spike.isGrounded = false
-
-            this.platforms.forEach(platform => {
-                spike.handlePlatformCollision(platform)
-            })
-
-            // Vänd vid world bounds istället för screen bounds
-            spike.handleScreenBounds(this.worldWidth)
-        })
-
+        
         // Kontrollera kollisioner mellan fiender
         this.enemies.forEach((enemy, index) => {
             this.enemies.slice(index + 1).forEach(otherEnemy => {
@@ -252,14 +237,6 @@ export default class Game {
             })
         })
 
-
-
-        this.Spikes.forEach((spike, index) => {
-            this.Spikes.slice(index + 1).forEach(otherSpike => {
-                spike.handleEnemyCollision(otherSpike)
-                otherSpike.handleEnemyCollision(spike)
-            })
-        })
         // Kontrollera kollision med mynt
         this.coins.forEach(coin => {
             if (this.player.intersects(coin) && !coin.markedForDeletion) {
@@ -279,28 +256,25 @@ export default class Game {
                 this.player.takeDamage(enemy.damage)
             }
         })
-
-        this.Spikes.forEach(spike => {
-            if (this.player.intersects(spike) && !spike.markedForDeletion) {
-                // Spelaren tar skada
-                this.player.takeDamage(spike.damage)
-            }
-        })
-
+        
         // Uppdatera projektiler
         this.projectiles.forEach(projectile => {
             projectile.update(deltaTime)
             
-            // Kolla kollision med fiender
+            // Kolla kollision med fiender (endast spelaren skjuter kan skada fiender)
             this.enemies.forEach(enemy => {
-                if (projectile.intersects(enemy) && !enemy.markedForDeletion) {
-                    enemy.markedForDeletion = true
+                if (projectile.intersects(enemy) && !enemy.markedForDeletion && projectile.owner === this.player) {
+                    enemy.takeDamage(1)
                     projectile.markedForDeletion = true
                     this.score += 50 // Bonuspoäng för att döda fiende
                 }
             })
-
             
+            // Kolla kollision med spelaren (endast fiender skjuter kan skada spelaren)
+            if (projectile.intersects(this.player) && projectile.owner !== this.player && !projectile.markedForDeletion) {
+                this.player.takeDamage(1)
+                projectile.markedForDeletion = true
+            }
             
             // Kolla kollision med plattformar/världen
             this.platforms.forEach(platform => {
@@ -357,12 +331,6 @@ export default class Game {
         this.enemies.forEach(enemy => {
             if (this.camera.isVisible(enemy)) {
                 enemy.draw(ctx, this.camera)
-            }
-        })
-
-        this.Spikes.forEach(spike => {
-            if (this.camera.isVisible(spike)) {
-                spike.draw(ctx, this.camera)
             }
         })
         
