@@ -19,6 +19,14 @@ export default class Dart extends GameObject {
         
         this.damage = 1 // Hur mycket skada fienden gör
         
+        // Shooting system - fienden skjuter konstant
+        this.shootCooldown = 2000 // millisekunder mellan skott
+        this.shootCooldownTimer = 0
+        
+        // Health system
+        this.maxHealth = 3
+        this.health = this.maxHealth
+        
         // TODO: Ladda sprites här
         // Använd this.loadSprite() metoden från GameObject
         // Exempel: this.loadSprite('idle', idleSprite, frames, frameInterval)
@@ -26,7 +34,7 @@ export default class Dart extends GameObject {
         this.currentAnimation = 'run'
     }
 
-    update(deltaTime) {
+    update(deltaTime) {       
         // Applicera luftmotstånd
         if (this.velocityY > 0) {
             this.velocityY -= this.game.friction * deltaTime
@@ -63,8 +71,36 @@ export default class Dart extends GameObject {
             this.setAnimation('idle')
         }
         
+        // Uppdatera shoot cooldown
+        if (this.shootCooldownTimer > 0) {
+            this.shootCooldownTimer -= deltaTime
+        } else {
+            // Skjut när cooldown är redo
+            this.shoot()
+        }
+        
         // Uppdatera animation frame
         this.updateAnimation(deltaTime)
+    }
+
+    shoot() {
+            
+        // Fienden skjuter neråt (directionY = 1)
+        const projectileX = this.x + this.width / 2
+        const projectileY = this.y + this.height / 2
+        
+        this.game.addEnemyProjectile(projectileX, projectileY, this, 1) // 1 = neråt
+        
+        // Återställ cooldown
+        this.shootCooldownTimer = this.shootCooldown
+    }
+    
+    takeDamage(amount) {
+        this.health -= amount
+        if (this.health < 0) {
+            this.health = 0
+            this.markedForDeletion = true // Ta bort fienden när den dör
+        }
     }
 
     handlePlatformCollision(platform) {

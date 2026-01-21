@@ -103,7 +103,12 @@ export default class Game {
         // Skapa fiender i nivån (utspridda över hela worldWidth)
         this.enemies = [
             new Enemy(this, 400, this.height - 300, 40, 40, 150),
+        ]
         
+        // Skapa dart shooters i nivån
+        this.dartShooters = [
+            new Dart(this, 600, 200, 40, 40, 100),
+            new Dart(this, 1200, 300, 40, 40, 150),
         ]
         
         // Projektiler
@@ -168,6 +173,9 @@ export default class Game {
         // Uppdatera fiender
         this.enemies.forEach(enemy => enemy.update(deltaTime))
         
+        // Uppdatera dart shooters
+        this.dartShooters.forEach(dart => dart.update(deltaTime))
+        
         // Uppdatera spelaren
         this.player.update(deltaTime)
 
@@ -227,6 +235,18 @@ export default class Game {
             
             // Vänd vid world bounds istället för screen bounds
             enemy.handleScreenBounds(this.worldWidth)
+        })
+        
+        // Kontrollera kollisioner för dart shooters med plattformar
+        this.dartShooters.forEach(dart => {
+            dart.isGrounded = false
+            
+            this.platforms.forEach(platform => {
+                dart.handlePlatformCollision(platform)
+            })
+            
+            // Vänd vid world bounds istället för screen bounds
+            dart.handleScreenBounds(this.worldWidth)
         })
         
         // Kontrollera kollisioner mellan fiender
