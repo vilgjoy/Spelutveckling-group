@@ -1,75 +1,27 @@
 import GameObject from './GameObject.js'
 
 export default class Dart extends GameObject {
-    constructor(game, x, y, width, height, patrolDistance = null) {
+    constructor(game, x, y, width, height) {
         super(game, x, y, width, height)
-        this.color = 'red' // Röd
+        this.color = 'purple' // Lila för att skilja från enemies
         
-        // Fysik
-        this.velocityX = 0
-        this.velocityY = 0
-        this.isGrounded = false
+        // Svävning - Dart shooters svävar på samma höjd
+        this.hoverY = y // Original höjd för att sväva omkring
+        this.hoverSpeed = 0.0005 // Hur snabbt den svävar upp/ner
+        this.hoverAmount = 20 // Hur långt upp/ner den svävar
+        this.hoverTime = 0
         
-        // Patrol AI
-        this.startX = x
-        this.patrolDistance = patrolDistance
-        this.endX = patrolDistance !== null ? x + patrolDistance : null
-        this.speed = 0.1
-        this.direction = 1 // 1 = höger, -1 = vänster
+        this.damage = 1 // Skada till player
         
-        this.damage = 1 // Hur mycket skada fienden gör
-        
-        // Shooting system - fienden skjuter konstant
-        this.shootCooldown = 2000 // millisekunder mellan skott
+        // Shooting system - skjuter konstant
+        this.shootCooldown = 1500 // millisekunder mellan skott
         this.shootCooldownTimer = 0
-        
-        // Health system
-        this.maxHealth = 3
-        this.health = this.maxHealth
-        
-        // TODO: Ladda sprites här
-        // Använd this.loadSprite() metoden från GameObject
-        // Exempel: this.loadSprite('idle', idleSprite, frames, frameInterval)
-        
-        this.currentAnimation = 'run'
     }
 
-    update(deltaTime) {       
-        // Applicera luftmotstånd
-        if (this.velocityY > 0) {
-            this.velocityY -= this.game.friction * deltaTime
-            if (this.velocityY < 0) this.velocityY = 0
-        }
-        
-        // Patruller när på marken
-        if (this.isGrounded) {
-            this.velocityX = this.speed * this.direction
-            
-            // Om vi har en patrolldistans, vänd vid ändpunkter
-            if (this.patrolDistance !== null) {
-                if (this.x >= this.endX) {
-                    this.direction = -1
-                    this.x = this.endX
-                } else if (this.x <= this.startX) {
-                    this.direction = 1
-                    this.x = this.startX
-                }
-            }
-            // Annars fortsätter fienden tills den kolliderar med något
-        } else {
-            this.velocityX = 0
-        }
-        
-        // Uppdatera position
-        this.x += this.velocityX * deltaTime
-        this.y += this.velocityY * deltaTime
-        
-        // Uppdatera animation state
-        if (this.velocityX !== 0 && this.isGrounded) {
-            this.setAnimation('run')
-        } else {
-            this.setAnimation('idle')
-        }
+    update(deltaTime) {
+        // Svävning upp och ner
+        this.hoverTime += deltaTime * this.hoverSpeed
+        this.y = this.hoverY + Math.sin(this.hoverTime) * this.hoverAmount
         
         // Uppdatera shoot cooldown
         if (this.shootCooldownTimer > 0) {
@@ -78,14 +30,10 @@ export default class Dart extends GameObject {
             // Skjut när cooldown är redo
             this.shoot()
         }
-        
-        // Uppdatera animation frame
-        this.updateAnimation(deltaTime)
     }
 
     shoot() {
-            
-        // Fienden skjuter neråt (directionY = 1)
+        // Dart shooter skjuter rakt neråt (directionY = 1)
         const projectileX = this.x + this.width / 2
         const projectileY = this.y + this.height / 2
         
@@ -94,71 +42,14 @@ export default class Dart extends GameObject {
         // Återställ cooldown
         this.shootCooldownTimer = this.shootCooldown
     }
-    
-    takeDamage(amount) {
-        this.health -= amount
-        if (this.health < 0) {
-            this.health = 0
-            this.markedForDeletion = true // Ta bort fienden när den dör
-        }
-    }
-
-    handlePlatformCollision(platform) {
-        const collision = this.getCollisionData(platform)
-        
-        if (collision) {
-            if (collision.direction === 'top' && this.velocityY > 0) {
-                // Fienden landar på plattformen
-                this.y = platform.y - this.height
-                this.velocityY = 0
-                this.isGrounded = true
-            } else if (collision.direction === 'bottom' && this.velocityY < 0) {
-                // Fienden träffar huvudet
-                this.y = platform.y + platform.height
-                this.velocityY = 0
-            } else if (collision.direction === 'left' && this.velocityX > 0) {
-                // Fienden träffar vägg - vänd
-                this.x = platform.x - this.width
-                this.direction = -1
-            } else if (collision.direction === 'right' && this.velocityX < 0) {
-                // Fienden träffar vägg - vänd
-                this.x = platform.x + platform.width
-                this.direction = 1
-            }
-        }
-    }
-    
-    handleEnemyCollision(otherEnemy) {
-        if (this.intersects(otherEnemy)) {
-            this.direction *= -1
-        }
-    }
-    
-    handleScreenBounds(gameWidth) {
-        // Vänd vid skärmkanter (för fiender utan patrolDistance)
-        if (this.patrolDistance === null) {
-            if (this.x <= 0) {
-                this.x = 0
-                this.direction = 1
-            } else if (this.x + this.width >= gameWidth) {
-                this.x = gameWidth - this.width
-                this.direction = -1
-            }
-        }
-    }
 
     draw(ctx, camera = null) {
         // Beräkna screen position (om camera finns)
         const screenX = camera ? this.x - camera.x : this.x
         const screenY = camera ? this.y - camera.y : this.y
         
-        // Försök rita sprite, annars fallback till rektangel
-        const spriteDrawn = this.drawSprite(ctx, camera, this.direction === -1)
-        
-        if (!spriteDrawn) {
-            // Fallback: Rita fienden som en röd rektangel
-            ctx.fillStyle = this.color
-            ctx.fillRect(screenX, screenY, this.width, this.height)
-        }
+        // Rita dart shooter som en lila rektangel
+        ctx.fillStyle = this.color
+        ctx.fillRect(screenX, screenY, this.width, this.height)
     }
 }

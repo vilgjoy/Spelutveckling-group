@@ -237,17 +237,7 @@ export default class Game {
             enemy.handleScreenBounds(this.worldWidth)
         })
         
-        // Kontrollera kollisioner för dart shooters med plattformar
-        this.dartShooters.forEach(dart => {
-            dart.isGrounded = false
-            
-            this.platforms.forEach(platform => {
-                dart.handlePlatformCollision(platform)
-            })
-            
-            // Vänd vid world bounds istället för screen bounds
-            dart.handleScreenBounds(this.worldWidth)
-        })
+        // Dart shooters svävar - ingen plattformkollision behövs
         
         // Kontrollera kollisioner mellan fiender
         this.enemies.forEach((enemy, index) => {
@@ -290,7 +280,7 @@ export default class Game {
                 }
             })
             
-            // Kolla kollision med spelaren (endast fiender skjuter kan skada spelaren)
+            // Kolla kollision med spelaren (endast fiender och dart shooters skjuter kan skada spelaren)
             if (projectile.intersects(this.player) && projectile.owner !== this.player && !projectile.markedForDeletion) {
                 this.player.takeDamage(1)
                 projectile.markedForDeletion = true
@@ -351,6 +341,13 @@ export default class Game {
         this.enemies.forEach(enemy => {
             if (this.camera.isVisible(enemy)) {
                 enemy.draw(ctx, this.camera)
+            }
+        })
+        
+        // Rita dart shooters med camera offset
+        this.dartShooters.forEach(dart => {
+            if (this.camera.isVisible(dart)) {
+                dart.draw(ctx, this.camera)
             }
         })
         
