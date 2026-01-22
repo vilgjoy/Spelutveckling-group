@@ -1,13 +1,12 @@
 import Player from './Player.js'
 import InputHandler from './InputHandler.js'
-import Platform from './Platform.js'
-import Coin from './Coin.js'
-import Enemy from './Enemy.js'
 import UserInterface from './UserInterface.js'
 import Camera from './Camera.js'
 import Projectile from './Projectile.js'
 import MainMenu from './menus/MainMenu.js'
-import Rectangle from './Rectangle.js'
+import Plant from './Plant.js'
+import Level1 from './levels/Level1.js'
+import Level2 from './levels/Level2.js'
 
 export default class Game {
     constructor(width, height) {
@@ -28,9 +27,17 @@ export default class Game {
         this.coinsCollected = 0
         this.totalCoins = 0 // Sätts när vi skapar coins
         this.currentMenu = null // Nuvarande meny som visas
+        this.plant = null
+        this.gameStateExtra = null // t.ex. 'WATERING'
+
+        // levels
+        this.levels = [Level1, Level2]
+        this.currentLevelIndex = 0
+        this.currentLevel = null
 
         this.inputHandler = new InputHandler(this)
         this.ui = new UserInterface(this)
+
         
         // Camera
         this.camera = new Camera(0, 0, width, height)
@@ -45,59 +52,23 @@ export default class Game {
     
 
     init() {
+    
         // Återställ score (men inte game state - det hanteras av constructor/restart)
         this.score = 0
         this.coinsCollected = 0
+        this.loadLevel(this.currentLevelIndex)
         
         // Återställ camera
         this.camera.x = 0
         this.camera.y = 0
         this.camera.targetX = 0
         this.camera.targetY = 0
-
-        this.gameObjects = []
-        const box = new Rectangle(this, 300, 399, 90, 100, '#654321')
-        box.isBox = true
-        box.velocityX = 0
-
-        box.stopAfter = 100
-
-        box.velocityY = 0
-        this.gameObjects.push(box)
-        
-
-
-    
-
-        this.player = new Player(this, 50, 240, 50, 50, 'green')
-
-        // Skapa plattformar för nivån (utspridda över hela worldWidth)
-        this.platforms = [
-            // Marken (hela nivån)
-            new Platform(this, 0, this.height - 80, 300, 300, '#654321'),
-            new Platform(this, 390, this.height - 80, 1000, 300, '#654321'),
-
-            // Plattformar (utspridda över nivån)
-          
-        ]
-
-        // Skapa mynt i nivån (utspridda över hela worldWidth)
-        this.coins = [
-            new Coin(this, 200, this.height - 400, 20, 20, 'gold'),
-            // Nya mynt längre bort
-
-        ]
-        this.totalCoins = this.coins.length
-
-        // Skapa fiender i nivån (utspridda över hela worldWidth)
-        this.enemies = [
-        
-        ]
         
         // Projektiler
         this.projectiles = []
 
         // Skapa andra objekt i spelet (valfritt)
+        this.gameObjects = []
     }
     
     addProjectile(x, y, directionX) {
@@ -111,172 +82,226 @@ export default class Game {
         this.currentMenu = null
     }
 
-    update(deltaTime) {
-        // Uppdatera menyn om den är aktiv
+    playerInLevelEndZone() {
+        const player = this.player
+        const zone = this.levelEndZone
+
+        if (!zone) return false
+
+        return (
+            player.x < zone.x + zone.width &&
+            player.x + player.width > zone.x &&
+            player.y < zone.y + zone.height &&
+            player.y + player.height > zone.y
+        )
+    }
+
+    loadLevel(index) {
+        const LevelClass = this.levels[index]
+        this.currentLevel = new LevelClass(this)
+        this.currentLevel.init()
+
+        const data = this.currentLevel.getData()
+
+        this.platforms = data.platforms
+        this.coins = data.coins
+        this.enemies = data.enemies
+        this.levelEndZone = data.levelEndZone
+
+        this.totalCoins = this.coins.length
+
+        this.player = new Player(
+            this,
+            data.playerSpawn.x,
+            data.playerSpawn.y,
+            50, 50, 'green'
+        )
+
+        this.plant = null
+        this.gameStateExtra = null
+    }
+
+    handleMenu(deltaTime) {
         if (this.gameState === 'MENU' && this.currentMenu) {
             this.currentMenu.update(deltaTime)
             this.inputHandler.keys.clear() // Rensa keys så de inte läcker till spelet
-            return
+            return true
         }
-        
-        // Kolla Escape för att öppna menyn under spel
+
         if (this.inputHandler.keys.has('Escape') && this.gameState === 'PLAYING') {
             this.gameState = 'MENU'
             this.currentMenu = new MainMenu(this)
-            return
+            return true
         }
-        
-        // Kolla restart input
-        if (this.inputHandler.keys.has('r') || this.inputHandler.keys.has('R')) {
-            if (this.gameState === 'GAME_OVER' || this.gameState === 'WIN') {
-                this.restart()
-                return
-            }
+
+        if (
+            (this.inputHandler.keys.has('r') || this.inputHandler.keys.has('R')) &&
+            (this.gameState === 'GAME_OVER' || this.gameState === 'WIN')
+        ) {
+            this.restart()
+            return true
         }
-        
-        // Uppdatera bara om spelet är i PLAYING state
-        if (this.gameState !== 'PLAYING') return
-        
-        // Uppdatera alla spelobjekt
-        this.gameObjects.forEach(obj => obj.update(deltaTime))
-        
-        // Uppdatera plattformar (även om de är statiska)
-        this.platforms.forEach(platform => platform.update(deltaTime))
-        
-        // Uppdatera mynt
-        this.coins.forEach(coin => coin.update(deltaTime))
-        
-        // Uppdatera fiender
-        this.enemies.forEach(enemy => enemy.update(deltaTime))
-        
-        // Uppdatera spelaren
+
+        return false
+    }
+
+    isPlaying() {
+        return this.gameState === 'PLAYING'
+    }
+
+    updateEntites(deltaTime) {
+        this.platforms.forEach(p => p.update(deltaTime))
+        this.coins.forEach(c => c.update(deltaTime))
+        this.enemies.forEach(e => e.update(deltaTime))
+        this.projectiles.forEach(p => p.update(deltaTime))
         this.player.update(deltaTime)
+    }
 
-
-        
-
-        this.gameObjects.forEach(obj => {
-            if (!obj.isBox) return
-            const threshold = 30
-            const push = 0.0008
-            const px = this.player.x + this.player.width
-            const bx = obj.x + obj.width/2
-            const dx = bx - px
-            const dist = Math.abs(dx)
-            if (dist < threshold) {
-                const dir = 1
-                obj.velocityX = (obj.velocityX || 0) + dir * push * deltaTime
-            }
-            const max = 0.8
-            obj.velocityX = Math.max(-max, Math.min(max, obj.velocityX))
-            obj.x += obj.velocityX * deltaTime
-
-        })
-
-        this.gameObjects.forEach(obj => {
-            if (obj.isBox || obj.stopped) return
-            const eps = 0.5
-            if (Math.abs(obj.x - 500) <= eps) {
-                return
-            }
-            
-        })
-        // Antag att spelaren inte står på marken, tills vi hittar en kollision
+    handleCollisions() {
         this.player.isGrounded = false
 
-        // Kontrollera kollisioner med plattformar
-        this.platforms.forEach(platform => {
-            this.player.handlePlatformCollision(platform)
+        this.platforms.forEach(p => {
+            this.player.handlePlatformCollision(p)
         })
 
-        // Kontrollera kollisioner för fiender med plattformar
         this.enemies.forEach(enemy => {
             enemy.isGrounded = false
-            
-            this.platforms.forEach(platform => {
-                enemy.handlePlatformCollision(platform)
+
+            this.platforms.forEach(p => {
+                enemy.handlePlatformCollision(p)
             })
-            
-            // Vänd vid world bounds istället för screen bounds
+
             enemy.handleScreenBounds(this.worldWidth)
         })
-        
-        // Kontrollera kollisioner mellan fiender
-        this.enemies.forEach((enemy, index) => {
-            this.enemies.slice(index + 1).forEach(otherEnemy => {
-                enemy.handleEnemyCollision(otherEnemy)
-                otherEnemy.handleEnemyCollision(enemy)
-            })
-        })
 
-        // Kontrollera kollision med mynt
         this.coins.forEach(coin => {
             if (this.player.intersects(coin) && !coin.markedForDeletion) {
-                // Plocka upp myntet
                 this.score += coin.value
                 this.coinsCollected++
                 coin.markedForDeletion = true
             }
         })
-        
-        // Kontrollera kollision med fiender
+
         this.enemies.forEach(enemy => {
-            if (this.player.intersects(enemy) && !enemy.markedForDeletion) {
-                // Spelaren tar skada
-                this.player.takeDamage(enemy.damage)
+            if (this.player.intersects(enemy)) {
+                this.player.takeDamage(1)
             }
         })
-        
-        // Uppdatera projektiler
+
         this.projectiles.forEach(projectile => {
-            projectile.update(deltaTime)
-            
-            // Kolla kollision med fiender
             this.enemies.forEach(enemy => {
-                if (projectile.intersects(enemy) && !enemy.markedForDeletion) {
+                if (projectile.intersects(enemy)) {
                     enemy.markedForDeletion = true
                     projectile.markedForDeletion = true
-                    this.score += 50 // Bonuspoäng för att döda fiende
+                    this.score += 50
                 }
             })
-            
-            // Kolla kollision med plattformar/världen
-            this.platforms.forEach(platform => {
-                if (projectile.intersects(platform)) {
+
+            this.platforms.forEach(p => {
+                if (projectile.intersects(p)) {
                     projectile.markedForDeletion = true
                 }
             })
         })
-        
-        // Ta bort alla objekt markerade för borttagning
-        this.coins = this.coins.filter(coin => !coin.markedForDeletion)
-        this.enemies = this.enemies.filter(enemy => !enemy.markedForDeletion)
-        this.projectiles = this.projectiles.filter(projectile => !projectile.markedForDeletion)
+    }
 
-        // Förhindra att spelaren går utöver world bounds
-        if (this.player.x < 0) {
-            this.player.x = 0
-        }
+    cleanup() {
+        this.coins = this.coins.filter(c => !c.markedForDeletion)
+        this.enemies = this.enemies.filter(e => !e.markedForDeletion)
+        this.projectiles = this.projectiles.filter(p => !p.markedForDeletion)
+
+        if (this.player.x < 0) this.player.x = 0
         if (this.player.x + this.player.width > this.worldWidth) {
             this.player.x = this.worldWidth - this.player.width
         }
-        
-        // Uppdatera kameran för att följa spelaren
+    }
+
+    updateCamera(deltaTime) {
         this.camera.follow(this.player)
         this.camera.update(deltaTime)
-        
-        // Kolla win condition - alla mynt samlade
-        if (this.coinsCollected === this.totalCoins && this.gameState === 'PLAYING') {
-            this.gameState = 'WIN'
-        }
-        
-        // Kolla lose condition - spelaren är död
-        if (this.player.health <= 0 && this.gameState === 'PLAYING') {
+    }
+
+    checkGameState() {
+        if (this.player.health <= 0 ) {
             this.gameState = 'GAME_OVER'
         }
     }
 
+    canPlant() {
+        return (
+            this.gameState === 'PLAYING' &&
+            !this.plant &&
+            this.playerInLevelEndZone() &&
+            this.player.isGrounded &&
+            (this.inputHandler.keys.has('e') || this.inputHandler.keys.has('E'))
+        )
+    }
+
+    spawnPlant() {
+        this.plant = new Plant(
+            this,
+            this.levelEndZone.x + this.levelEndZone.width / 2 - 10,
+            this.levelEndZone.y
+        )
+        this.gameStateExtra = 'WATERING'
+    }
+
+    updatePlant(deltaTime) {
+        this.plant.update(deltaTime)
+
+        if (this.plant.isFullyGrown) {
+            this.gameStateExtra = null
+            this.currentLevelIndex++
+
+            if (this.currentLevelIndex >= this.levels.length) {
+                this.gameState = 'WIN' // eller 'MENU' om du vill återgå till menyn
+                return
+            }
+
+            this.loadLevel(this.currentLevelIndex)
+            return
+        }
+     }
+
+     handlePlanting(deltaTime) {
+        if (!this.plant && this.canPlant()) {
+            this.spawnPlant()
+        }
+
+        if (this.gameStateExtra === 'WATERING' && this.plant) {
+            this.updatePlant(deltaTime)
+        }
+     }
+
+    update(deltaTime) {
+        if (this.handleMenu(deltaTime)) return
+        if (!this.isPlaying()) return
+
+        this.handlePlanting(deltaTime)
+        this.updateEntites(deltaTime)
+        this.handleCollisions()
+        this.cleanup()
+        this.updateCamera(deltaTime)
+        this.checkGameState()
+
+    }
+
     draw(ctx) {
+        // debug tool för end zone
+        if (this.levelEndZone) {
+            ctx.save()
+            ctx.strokeStyle = 'yellow'
+            ctx.lineWidth = 3
+            ctx.strokeRect(
+                this.levelEndZone.x - this.camera.x,
+                this.levelEndZone.y - this.camera.y,
+                this.levelEndZone.width,
+                this.levelEndZone.height
+            )
+            ctx.restore()
+        }
+
+
         // Rita alla plattformar med camera offset
         this.platforms.forEach(platform => {
             if (this.camera.isVisible(platform)) {
@@ -311,6 +336,20 @@ export default class Game {
                 obj.draw(ctx, this.camera)
             }
         })
+
+        if (this.playerInLevelEndZone() && !this.plant) {
+            ctx.fillStyle = 'white'
+            ctx.font = '16px Arial'
+            ctx.fillText(
+                'Press E',
+                this.levelEndZone.x - this.camera.x,
+                this.levelEndZone.y - 10 - this.camera.y
+            )
+        }
+
+        if (this.plant && this.camera.isVisible(this.plant)) {
+            this.plant.draw(ctx, this.camera)
+        }
         
         // Rita spelaren med camera offset
         this.player.draw(ctx, this.camera)
