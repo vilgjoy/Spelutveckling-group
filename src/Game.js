@@ -7,6 +7,7 @@ import MainMenu from './menus/MainMenu.js'
 import Plant from './Plant.js'
 import Level1 from './levels/Level1.js'
 import Level2 from './levels/Level2.js'
+import Level3 from './levels/Level3.js'
 
 export default class Game {
     constructor(width, height) {
@@ -31,14 +32,18 @@ export default class Game {
         this.gameStateExtra = null // t.ex. 'WATERING'
 
         // levels
-        this.levels = [Level1, Level2]
+        this.levels = [Level1, Level2, Level3]
         this.currentLevelIndex = 0
         this.currentLevel = null
+        this.deathZones = []
 
         this.inputHandler = new InputHandler(this)
         this.ui = new UserInterface(this)
 
-        
+        // debug
+        this.debug = true
+        this.debugKeyPressed = false
+
         // Camera
         this.camera = new Camera(0, 0, width, height)
         this.camera.setWorldBounds(this.worldWidth, this.worldHeight)
@@ -52,23 +57,35 @@ export default class Game {
     
 
     init() {
+        // Projektiler
+        this.projectiles = []
+        // maybe tas bort idk
+        this.gameObjects = []
+        this.deathZones = []
     
-        // Återställ score (men inte game state - det hanteras av constructor/restart)
+        // återställ score (men inte game state - det hanteras av constructor/restart)
         this.score = 0
         this.coinsCollected = 0
-        this.loadLevel(this.currentLevelIndex)
         
-        // Återställ camera
+        // återställ camera
         this.camera.x = 0
         this.camera.y = 0
         this.camera.targetX = 0
         this.camera.targetY = 0
         
-        // Projektiler
-        this.projectiles = []
+        this.loadLevel(this.currentLevelIndex)
+    }
 
-        // Skapa andra objekt i spelet (valfritt)
-        this.gameObjects = []
+    handleDebugInput(){
+        if (this.inputHandler.keys.has('d') || this.inputHandler.keys.has('D')) {
+            if (!this.debugKeyPressed) {
+                this.debug = !this.debug
+                this.debugKeyPressed = true
+                console.log('Debug mode:', this.debug)
+            }
+        } else {
+            this.debugKeyPressed = false
+        }
     }
     
     addProjectile(x, y, directionX) {
@@ -107,6 +124,7 @@ export default class Game {
         this.coins = data.coins
         this.enemies = data.enemies
         this.levelEndZone = data.levelEndZone
+        this.deathZones = data.deathZones || []
 
         this.totalCoins = this.coins.length
 
@@ -203,6 +221,12 @@ export default class Game {
                 }
             })
         })
+
+        this.deathZones.forEach(zone => {
+            if (this.player.intersects(zone)) {
+                this.player.health = 0
+            }
+        })
     }
 
     cleanup() {
@@ -238,10 +262,13 @@ export default class Game {
     }
 
     spawnPlant() {
+        const plantSize = 64 // frame size
+
         this.plant = new Plant(
             this,
-            this.levelEndZone.x + this.levelEndZone.width / 2 - 10,
-            this.levelEndZone.y
+            this.levelEndZone.x + this.levelEndZone.width / 2 - (plantSize / 2),
+            this.levelEndZone.y + this.levelEndZone.height,
+            plantSize
         )
         this.gameStateExtra = 'WATERING'
     }
@@ -277,6 +304,7 @@ export default class Game {
         if (this.handleMenu(deltaTime)) return
         if (!this.isPlaying()) return
 
+        this.handleDebugInput()
         this.handlePlanting(deltaTime)
         this.updateEntites(deltaTime)
         this.handleCollisions()
@@ -288,7 +316,7 @@ export default class Game {
 
     draw(ctx) {
         // debug tool för end zone
-        if (this.levelEndZone) {
+        if (this.debug &&this.levelEndZone) {
             ctx.save()
             ctx.strokeStyle = 'yellow'
             ctx.lineWidth = 3
@@ -351,6 +379,13 @@ export default class Game {
             this.plant.draw(ctx, this.camera)
         }
         
+        this.deathZones.forEach(zone => {
+            if (this.camera.isVisible(zone)) {
+                zone.draw(ctx, this.camera)
+            }
+        })
+        
+
         // Rita spelaren med camera offset
         this.player.draw(ctx, this.camera)
         
