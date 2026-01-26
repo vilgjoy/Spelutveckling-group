@@ -19,7 +19,7 @@ export default class Player extends GameObject {
         this.directionY = 0
 
         // Fysik egenskaper
-        this.jumpPower = -0.4 // negativ hastighet för att hoppa uppåt
+        this.jumpPower = -0.7 // negativ hastighet för att hoppa uppåt
         this.isGrounded = false // om spelaren står på marken
         
         // Health system

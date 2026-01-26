@@ -2,6 +2,7 @@ import Level from './Level.js'
 import Platform from '../Platform.js'
 import Coin from '../Coin.js'
 
+
 export default class Level1 extends Level {
     createPlatforms() {
         const h = this.game.height

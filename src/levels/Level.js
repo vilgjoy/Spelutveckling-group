@@ -5,6 +5,7 @@ export default class Level {
         this.platforms = []
         this.coins = []
         this.enemies = []
+        this.deathZones = []
 
         this.playerSpawn = {x: 50, y: 200}
     }
@@ -14,18 +15,22 @@ export default class Level {
         this.createCoins()
         this.createEnemies()
         this.createEndZone()
+        this.createDeathZones()
+
     }
 
     createPlatforms() {}
     createCoins() {}
     createEnemies() {}
     createEndZone() {}
+    createDeathZones() {}
 
     getData() {
         return {
             platforms: this.platforms,
             coins: this.coins,
             enemies: this.enemies,
+            deathZones: this.deathZones,
             playerSpawn: this.playerSpawn,
             levelEndZone: this.levelEndZone
         }
