@@ -57,16 +57,16 @@ export default class Game {
         })
 
         // nytt - behöver göra detta på grund av webbläsare policy
-        const playMusic = () => {
-            this.bgMusic.play().catch(error => {
-                console.log('kunde inte spela musik:', error)
-            })
-            // ta bort lyssnarna så man inte försöker starta den om och om igen
-            window.removeEventListener('click', playMusic)
-            window.removeEventListener('keydown', playMusic)
-        }
-        window.addEventListener('click', playMusic)
-        window.addEventListener('keydown', playMusic)
+        // const playMusic = () => {
+        //     this.bgMusic.play().catch(error => {
+        //         console.log('kunde inte spela musik:', error)
+        //     })
+        //     // ta bort lyssnarna så man inte försöker starta den om och om igen
+        //     window.removeEventListener('click', playMusic)
+        //     window.removeEventListener('keydown', playMusic)
+        // }
+        // window.addEventListener('click', playMusic)
+        // window.addEventListener('keydown', playMusic)
 
         this.levels = [Level1, Level2, Level3]
         this.currentLevelIndex = 0
@@ -191,9 +191,14 @@ export default class Game {
     
     restart() {
         this.init()
-        this.gameHasStarted = true
+        this.gameHasStarted = true // nytt
         this.gameState = 'PLAYING'
         this.currentMenu = null
+        this.bgMusic.currentTime = 0 // nytt
+
+        this.bgMusic.play().catch(error => {
+            console.warn('musik kunde inte startas:', error)
+        })
     }
 
     playerInLevelEndZone() {
@@ -386,10 +391,17 @@ export default class Game {
         }
      }
 
+     // nytt
+     plantStartsGrowing() {
+        if (this.plant) {
+            this.plant.water()
+            this.gameStateExtra = 'GROWING'
+        }
+     }
+
      handlePlanting(deltaTime) {
         if (this.canWaterPlant()) {
-            this.plant.water()
-            this.gameStateExtra = 'WATERING'
+            this.player.startWatering() // nytt
         }
 
         this.updatePlant(deltaTime)

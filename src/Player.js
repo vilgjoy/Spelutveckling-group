@@ -3,6 +3,8 @@ import idleSprite from './assets/Sprite-idle.png'
 import runSprite from './assets/Sprite-run.png'
 import deadSprite from './assets/Sprite-ded.png'
 import jumpSprite from './assets/Sprite-jump.png'
+import climbSprite from './assets/Sprite-climb.png'
+import waterSprite from './assets/Sprite-watering.png'
 
 // nytt
 import jumpSfx from './assets/jump.mp3'
@@ -30,6 +32,7 @@ export default class Player extends GameObject {
         // nytt
         this.isLanding = false
         this.wasGrounded = false
+        this.isWatering = false
         
         this.maxHealth = 1
         this.health = this.maxHealth
@@ -47,8 +50,9 @@ export default class Player extends GameObject {
         this.loadSprite('jump', jumpSprite, 14, 0, 5, 100)
         this.loadSprite('fall', jumpSprite, 14, 6, 8, 100) 
         // nytt
-        this.loadSprite('climb', runSprite, 10, 0, 9, 100) // byt till climbing animation 
+        this.loadSprite('climb', climbSprite, 10, 0, 10, 100) 
         this.loadSprite('land', jumpSprite, 14, 9, 13, 60) 
+        this.loadSprite('water', waterSprite, 6, 0, 5, 150)
         
         this.currentAnimation = 'idle'
 
@@ -61,7 +65,21 @@ export default class Player extends GameObject {
             if (animationName === 'land') {
                 this.isLanding = false
             }
+
+            if (animationName === 'water') {
+                this.isWatering = false
+                this.setAnimation('idle')
+                this.game.plantStartsGrowing()
+            }
         }
+    }
+
+    // nytt
+    startWatering() {
+        this.isWatering = true
+        this.velocityX = 0
+        this.velocityY = 0
+        this.setAnimation('water')
     }
 
     // nytt
@@ -87,6 +105,12 @@ export default class Player extends GameObject {
             this.updateAnimation(deltaTime)
             // väntar på att onAnimationComplete ska trigga restart
             return 
+        }
+
+        // nytt
+        if (this.isWatering || this.game.gameStateExtra === 'GROWING') {
+            this.updateAnimation(deltaTime)
+            return
         }
 
         if (this.isClimbing) {
