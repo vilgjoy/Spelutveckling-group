@@ -3,8 +3,8 @@ import Platform from '../Platform.js'
 import Coin from '../Coin.js'
 import Spike from '../Spikes.js'
 // nytt
-import Fakespikes from '../fakeSpikes'
-import Box from '../Box.js'
+// import Fakespikes from '../fakeSpikes'
+// import Box from '../Box.js'
 
 export default class Level1 extends Level {
     createPlatforms() {
