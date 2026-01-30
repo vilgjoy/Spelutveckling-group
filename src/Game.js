@@ -56,18 +56,6 @@ export default class Game {
             this.mouse.clicked = false
         })
 
-        // nytt - behöver göra detta på grund av webbläsare policy
-        // const playMusic = () => {
-        //     this.bgMusic.play().catch(error => {
-        //         console.log('kunde inte spela musik:', error)
-        //     })
-        //     // ta bort lyssnarna så man inte försöker starta den om och om igen
-        //     window.removeEventListener('click', playMusic)
-        //     window.removeEventListener('keydown', playMusic)
-        // }
-        // window.addEventListener('click', playMusic)
-        // window.addEventListener('keydown', playMusic)
-
         this.levels = [Level1, Level2, Level3]
         this.currentLevelIndex = 0
         this.currentLevel = null
@@ -82,7 +70,7 @@ export default class Game {
         this.inputHandler = new InputHandler(this)
         this.ui = new UserInterface(this)
 
-        this.debug = true
+        this.debug = false
         this.debugKeyPressed = false
         // nytt
         this.muteKeyPressed = false
